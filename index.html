@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HajjGuide — Карта и сервис для паломников Мекки и Медины</title>
+<title>Takia — Цифровая тәкия для паломников Мекки и Медины</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -505,6 +505,157 @@
     color: var(--ink-soft);
     font-size: 15px;
     line-height: 1.6;
+  }
+
+  /* ============ HERITAGE ============ */
+  .heritage {
+    background:
+      radial-gradient(ellipse at top left, rgba(201,164,74,0.07) 0%, transparent 50%),
+      linear-gradient(180deg, #fbf8f3 0%, #f7f4ec 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .heritage::before {
+    content: "";
+    position: absolute;
+    top: 40px;
+    right: -80px;
+    width: 360px;
+    height: 360px;
+    background-image:
+      radial-gradient(circle, rgba(13,77,53,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .heritage-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 64px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .heritage-text .label-tag { color: var(--gold); }
+  .heritage-text h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 44px;
+    font-weight: 600;
+    color: var(--green-deep);
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .heritage-text h2 .accent { color: var(--gold); font-style: italic; }
+  .heritage-text .lead {
+    font-size: 17px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .heritage-text .lead strong { color: var(--green-deep); font-weight: 700; }
+  .heritage-names {
+    background: white;
+    border-left: 3px solid var(--gold);
+    padding: 18px 22px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+  .heritage-names strong { color: var(--green-deep); display: block; margin-bottom: 6px; font-family: 'Cormorant Garamond', serif; font-size: 16px; }
+  .heritage-sources {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-style: italic;
+    line-height: 1.5;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  /* Visual side */
+  .heritage-visual {
+    position: relative;
+    aspect-ratio: 4/5;
+    background: linear-gradient(160deg, var(--green-deep) 0%, var(--green-mid) 100%);
+    border-radius: 20px;
+    padding: 32px;
+    color: white;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(13,77,53,0.18);
+  }
+  .heritage-visual::before {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(201,164,74,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .heritage-year {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 96px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--gold-light);
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .heritage-year-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.85;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  .heritage-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    line-height: 1.35;
+    font-style: italic;
+    margin-bottom: 20px;
+    position: relative;
+    padding-left: 18px;
+    border-left: 2px solid var(--gold-light);
+  }
+  .heritage-quote-author {
+    font-size: 12px;
+    opacity: 0.85;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .heritage-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .h-stat .num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    color: var(--gold-light);
+    line-height: 1;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+  .h-stat .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+  }
+  @media (max-width: 768px) {
+    .heritage-grid { grid-template-columns: 1fr; gap: 40px; }
+    .heritage-text h2 { font-size: 30px; }
+    .heritage-visual { padding: 24px; aspect-ratio: auto; }
+    .heritage-year { font-size: 72px; }
+    .heritage-quote { font-size: 18px; }
+    .heritage-stats { gap: 8px; }
+    .h-stat .num { font-size: 22px; }
   }
 
   /* ============ SOLUTION ============ */
@@ -1371,39 +1522,13 @@
       gap: 40px;
     }
     .guides-inner > div:last-child { order: -1; }
-
-	/* Превращаем стопку в вертикальный список */
-	.guide-card-stack {
-	  height: auto;
-	  position: static;
-	  display: flex;
-	  flex-direction: column;
-	  gap: 16px;
-	  max-width: 420px;
-	  margin: 0 auto;
-	  width: 100%;
-	}
-	.guide-card {
-	  position: static;
-	  width: 100%;
-	  transform: none;
-	  padding: 20px;
-	  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-	}
-	/* Сбрасываем индивидуальные позиции карточек */
-	.gc-1, .gc-2, .gc-3 {
-	  top: auto;
-	  left: auto;
-	  right: auto;
-	  bottom: auto;
-	  transform: none;
-	}
-
-	.guide-avatar { width: 48px; height: 48px; font-size: 17px; }
-	.guide-name { font-size: 15px; }
-	.guide-cred { font-size: 11px; flex-wrap: wrap; }
-	.lang-tag { font-size: 10px; padding: 3px 8px; }
-	.guide-price { font-size: 15px; }
+    .guide-card-stack { height: 480px; margin: 0 auto; max-width: 360px; }
+    .guide-card { padding: 20px; width: 95%; }
+    .guide-avatar { width: 48px; height: 48px; font-size: 17px; }
+    .guide-name { font-size: 15px; }
+    .guide-cred { font-size: 11px; flex-wrap: wrap; }
+    .lang-tag { font-size: 10px; padding: 3px 8px; }
+    .guide-price { font-size: 15px; }
 
     /* How */
     .how-steps {
@@ -1549,9 +1674,10 @@
   <div class="nav-inner">
     <div class="logo">
       <div class="logo-mark">ﷲ</div>
-      HajjGuide
+      Takia
     </div>
     <ul class="nav-links">
+      <li><a href="#heritage">Наследие</a></li>
       <li><a href="#features">Возможности</a></li>
       <li><a href="#guides">Гиды</a></li>
       <li><a href="#how">Как это работает</a></li>
@@ -1583,12 +1709,12 @@
   <div class="container">
     <div class="hero-inner">
       <div>
-        <span class="label-tag">Карта & сервис для паломников</span>
-        <h1>Всё для Хаджа и Умры — <span class="accent">в одной ладони</span></h1>
-        <p class="lead">Карта Мекки и Медины с ресторанами, аптеками, гидами и обменниками. Бронирование лицензированного мутаввифа на родном языке. Все обряды по шагам. Офлайн-режим.</p>
+        <span class="label-tag">Цифровая тәкия для паломников</span>
+        <h1>Приют для паломника — <span class="accent">в вашем смартфоне</span></h1>
+        <p class="lead">В 1874 году Кунанбай Оскенбайулы и 120 казахских аксакалов построили в Мекке четыре дома-тәкия для паломников. Мы продолжаем их дело в цифровой форме: карта Мекки и Медины, лицензированные гиды, руководства по обрядам, офлайн-режим.</p>
         <div class="hero-cta">
           <a href="#cta" class="btn btn-primary btn-large">Установить бесплатно</a>
-          <a href="#features" class="btn btn-outline btn-large">Посмотреть возможности</a>
+          <a href="#heritage" class="btn btn-outline btn-large">Наша история</a>
         </div>
         <div class="hero-trust">
           <div class="trust-item">
@@ -1745,6 +1871,48 @@
   </div>
 </section>
 
+<!-- HERITAGE -->
+<section class="heritage" id="heritage">
+  <div class="container">
+    <div class="heritage-grid">
+      <div class="heritage-text">
+        <span class="label-tag">Наследие 1874 года</span>
+        <h2>Тәкия — приют, <span class="accent">которому 150 лет</span></h2>
+        <p class="lead">В 1874 году <strong>Кунанбай Оскенбайулы</strong> — отец великого Абая, ага-султан Каркаралинского округа — возглавил историческое паломничество <strong>120 авторитетных казахских аксакалов</strong>. В составе делегации были представители Среднего и Младшего жузов. Это было первое объединённое движение казахской элиты на международной арене.</p>
+        <p class="lead">Совместными усилиями паломники построили в Мекке <strong>четыре дома</strong> — один из мрамора и три из кирпича. Они стали известны как <strong>«казахская тәкия»</strong> — бесплатный приют и медресе для паломников из казахской степи. Именно в этом путешествии казахи впервые официально заявили миру: <em>«Мы — отдельный народ, не сарты и не ногаи»</em>.</p>
+        <div class="heritage-names">
+          <strong>Среди участников паломничества:</strong>
+          Досжан хазрет Қашақұлы (Актобе, Младший жуз) · Тайті Жапаұлы (старший брат Жамбыла Жабаева, Жетысу) · Әбдірахман Жүсіпұлы (Семипалатинск, автор поэмы о хадже) · Қишыл Қыстаубай (род айдабол) · Егізек и Жанайдар (Атбасар) · Шонтыбай (кулан-кыпшак) · Нурпейіс хазрет Байгараулы · Губайдулла-султан (сын Жангир-хана) — и около ста других достойных мужей казахской степи.
+        </div>
+        <p class="lead">Через 150 лет мы возрождаем эту миссию в цифровой форме. <strong>Takia</strong> — приют, который теперь живёт в смартфоне каждого паломника.</p>
+        <div class="heritage-sources">
+          Источники: «Қазақ шежіресі» Мәшһүр-Жүсіпа Көпейулы · «Маңызды мәселелер» Шакарима Кудайбердиулы (Казань, 1883) · поэма «Қажы Әндірбай қалпе» Әбдірахмана Жүсіпұлы (Казань, 1900).
+        </div>
+      </div>
+      <div class="heritage-visual">
+        <div class="heritage-year">1874</div>
+        <div class="heritage-year-label">Год основания Тәкии</div>
+        <div class="heritage-quote">«Меккеде уақып үй салып, пәтер қып, жаққан шырақты...»</div>
+        <div class="heritage-quote-author">— Абай Кунанбаев, об отце</div>
+        <div class="heritage-stats">
+          <div class="h-stat">
+            <div class="num">120</div>
+            <div class="lbl">Аксакалов</div>
+          </div>
+          <div class="h-stat">
+            <div class="num">4</div>
+            <div class="lbl">Дома-тәкия</div>
+          </div>
+          <div class="h-stat">
+            <div class="num">2</div>
+            <div class="lbl">Жуза</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- SOLUTION -->
 <section class="solution">
   <div class="container">
@@ -1752,7 +1920,7 @@
       <div class="solution-text">
         <span class="label-tag">Наше решение</span>
         <h2>Один сервис <span class="accent">для всего паломничества</span></h2>
-        <p class="lead">HajjGuide — это не просто карта. Это ваш цифровой мутаввиф, справочник и помощник в одном приложении. На вашем родном языке. С проверенными местами и людьми.</p>
+        <p class="lead">Takia — это не просто карта. Это ваш цифровой мутаввиф, справочник и помощник в одном приложении. Цифровое продолжение тәкии, которую 150 лет назад построили Кунанбай и его спутники. На вашем родном языке. С проверенными местами и людьми.</p>
         <ul class="solution-list">
           <li><span class="check">✓</span> Карта со всеми магазинами, кафе и услугами рядом</li>
           <li><span class="check">✓</span> Лицензированные гиды с гарантией качества</li>
@@ -1978,58 +2146,58 @@
   <div class="container">
     <div class="section-header">
       <span class="label-tag">Сравнение</span>
-      <h2>Почему HajjGuide <span class="accent">лучше других</span></h2>
+      <h2>Почему Takia <span class="accent">лучше других</span></h2>
       <p class="lead">Мы не делаем универсальное приложение для туристов. Мы делаем единственное в своём роде решение для паломников.</p>
     </div>
     <div class="compare">
       <div class="compare-row">
         <div class="compare-feature"></div>
-        <div class="compare-cell compare-header" style="color: var(--green-deep);">HajjGuide</div>
+        <div class="compare-cell compare-header" style="color: var(--green-deep);">Takia</div>
         <div class="compare-cell compare-header">Google Maps</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Карта на казахском и других языках</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ 6 языков</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ 6 языков</div>
         <div class="compare-cell partial" data-label="Google:">Частично</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Места рядом с Харамом и Набави</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ С расстояниями</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ С расстояниями</div>
         <div class="compare-cell no" data-label="Google:">Нет привязки</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Поиск гида-мутаввифа</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ Маркетплейс</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ Маркетплейс</div>
         <div class="compare-cell no" data-label="Google:">Нет</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Время намазов и кибла</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ Встроено</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ Встроено</div>
         <div class="compare-cell no" data-label="Google:">Нет</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Руководства по обрядам</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ Пошагово</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ Пошагово</div>
         <div class="compare-cell no" data-label="Google:">Нет</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Метка "халяль", махраб, гендерное разделение</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ Все фильтры</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ Все фильтры</div>
         <div class="compare-cell no" data-label="Google:">Нет</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Офлайн-режим</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ Полный</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ Полный</div>
         <div class="compare-cell partial" data-label="Google:">Только карты</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Эскроу-платежи за услуги</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ Защищено</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ Защищено</div>
         <div class="compare-cell no" data-label="Google:">Нет</div>
       </div>
       <div class="compare-row">
         <div class="compare-feature">Поддержка на казахском и других языках</div>
-        <div class="compare-cell yes" data-label="HajjGuide:">✓ 24/7</div>
+        <div class="compare-cell yes" data-label="Takia:">✓ 24/7</div>
         <div class="compare-cell no" data-label="Google:">Нет</div>
       </div>
     </div>
@@ -2121,9 +2289,9 @@
 <section class="cta-final" id="cta">
   <div class="container">
     <div class="cta-final-inner">
-      <span class="label-tag" style="color: var(--gold-light);">Начните своё спокойное паломничество</span>
-      <h2>Скачайте HajjGuide и <span class="accent">подготовьтесь правильно</span></h2>
-      <p>Установка занимает минуту. Сэкономит часы поиска, нервы и деньги — на каждом дне вашего пребывания в священных местах.</p>
+      <span class="label-tag" style="color: var(--gold-light);">Тәкия, которой 150 лет</span>
+      <h2>Скачайте Takia — <span class="accent">продолжите путь предков</span></h2>
+      <p>В 1874 году 120 казахских аксакалов построили в Мекке тәкия для паломников. Сегодня этот приют живёт в вашем смартфоне. Установка занимает минуту.</p>
       <div class="cta-buttons">
         <a href="#" class="btn btn-white btn-large">📱 App Store</a>
         <a href="#" class="btn btn-white btn-large">📱 Google Play</a>
@@ -2146,12 +2314,13 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <h4>HajjGuide</h4>
-        <p>Цифровая платформа для паломников Хаджа и Умры. Карта, гиды, руководства, поддержка — всё для спокойного паломничества к святыням ислама.</p>
+        <h4>Takia</h4>
+        <p>Цифровая тәкия — приют для паломников в смартфоне. Продолжение дела Кунанбая Оскенбайулы и 120 казахских аксакалов 1874 года. Карта, гиды, руководства — всё для спокойного паломничества к святыням ислама.</p>
       </div>
       <div class="footer-col">
         <h5>Продукт</h5>
         <ul>
+          <li><a href="#heritage">Наследие</a></li>
           <li><a href="#features">Возможности</a></li>
           <li><a href="#guides">Гиды</a></li>
           <li><a href="#how">Как работает</a></li>
@@ -2178,7 +2347,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      © 2026 HajjGuide. Все права защищены. · Made with respect for the Ummah
+      © 2026 Takia. Все права защищены. · Made with respect for the Ummah
     </div>
   </div>
 </footer>
