@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takia — Избранное</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .favorites-page { padding: 24px 20px 100px; }
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--green-deep);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .page-subtitle {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-mute);
+  }
+  .empty-icon {
+    font-size: 64px;
+    opacity: 0.4;
+    margin-bottom: 16px;
+  }
+  .empty-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--green-deep);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .fav-list {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <a href="app.html" class="app-logo">
+    <div class="app-logo-mark">ﷲ</div>
+    Takia
+  </a>
+  <a href="favorites.html" class="user-chip">
+    <div class="user-avatar">А</div>
+    <span>Айгуль</span>
+    <span class="premium-badge">★ Pro</span>
+  </a>
+</header>
+
+<div class="favorites-page">
+  <h1 class="page-title">⭐ Избранное</h1>
+  <p class="page-subtitle">Места, которые вы сохранили для быстрого доступа</p>
+
+  <div id="content"></div>
+</div>
+
+<nav class="tab-bar">
+  <a href="app.html" class="tab">
+    <div class="tab-icon">🗺</div>
+    Карта
+  </a>
+  <a href="guides.html" class="tab">
+    <div class="tab-icon">📖</div>
+    Обряды
+  </a>
+  <a href="offline.html" class="tab">
+    <div class="tab-icon">📡</div>
+    Офлайн
+  </a>
+  <a href="favorites.html" class="tab active">
+    <div class="tab-icon">⭐</div>
+    Избранное
+  </a>
+</nav>
+
+<script src="assets/data.js"></script>
+<script>
+  const content = document.getElementById('content');
+  const favs = CURRENT_USER.favorites.map(id => getPlaceById(id)).filter(Boolean);
+
+  if (favs.length === 0) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⭐</div>
+        <div class="empty-title">Пока ничего не сохранено</div>
+        <p style="margin-bottom: 20px;">Открывайте места на карте и нажимайте ⭐ — они появятся здесь.</p>
+        <a href="app.html" class="btn btn-primary">К карте →</a>
+      </div>
+    `;
+  } else {
+    content.innerHTML = '<div class="fav-list" style="padding: 16px;">' + favs.map(place => {
+      const cat = CATEGORIES[place.category];
+      return `
+        <div class="place-item" onclick="window.location.href='place.html?id=${place.id}'">
+          <div class="place-icon" style="background:${cat.bgColor}; color:${cat.color}">${cat.icon}</div>
+          <div class="place-info">
+            <div class="place-name">${place.name}</div>
+            <div class="place-meta">
+              <span class="${place.openNow ? 'open' : 'closed'}">${place.openNow ? 'Открыто' : 'Закрыто'}</span>
+              <span class="dot-sep">·</span>
+              <span>★ ${place.rating}</span>
+              ${place.cuisine ? `<span class="dot-sep">·</span><span>${place.cuisine}</span>` : ''}
+              <span class="dot-sep">·</span>
+              <span>${place.city === 'Mecca' ? 'Мекка' : 'Медина'}</span>
+            </div>
+          </div>
+          <div class="place-distance">
+            <div class="num">${place.distanceFromHaram < 1000 ? place.distanceFromHaram : (place.distanceFromHaram/1000).toFixed(1)}</div>
+            <div class="lbl">${place.distanceFromHaram < 1000 ? 'м' : 'км'}</div>
+          </div>
+        </div>
+      `;
+    }).join('') + '</div>';
+  }
+</script>
+
+</body>
+</html>

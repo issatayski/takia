@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takia — Офлайн-режим</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .offline-page { padding: 0 0 100px; }
+  .offline-hero {
+    background: linear-gradient(135deg, #1a2620, var(--green-deep));
+    color: white;
+    padding: 28px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .offline-hero::before {
+    content: "";
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(78,205,196,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .offline-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(78,205,196,0.15);
+    color: #7df5ed;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .offline-status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #4ecdc4;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .offline-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .offline-sub {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .storage-bar {
+    background: rgba(255,255,255,0.1);
+    padding: 14px 16px;
+    border-radius: 10px;
+    position: relative;
+  }
+  .storage-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .storage-row .free { color: var(--gold-light); font-weight: 700; }
+  .storage-track {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .storage-fill {
+    height: 100%;
+    background: var(--gold-light);
+    border-radius: 3px;
+  }
+
+  /* Pack cards */
+  .packs {
+    padding: 20px;
+  }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .pack-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .pack-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--green-bg);
+    color: var(--green-deep);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .pack-info { flex: 1; min-width: 0; }
+  .pack-name {
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  .pack-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+  }
+  .pack-action button {
+    background: var(--green-deep);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .pack-action button.done {
+    background: var(--green-bg);
+    color: var(--green-deep);
+  }
+  .pack-action button.downloading {
+    background: var(--gold);
+  }
+
+  .actions-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .progress-overlay {
+    background: var(--gold-bg);
+    border-left: 3px solid var(--gold);
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #8a6500;
+    display: none;
+  }
+  .progress-bar {
+    background: white;
+    border-radius: 3px;
+    height: 6px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    background: var(--gold);
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.2s;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <a href="app.html" class="app-logo">
+    <div class="app-logo-mark">ﷲ</div>
+    Takia
+  </a>
+  <a href="favorites.html" class="user-chip">
+    <div class="user-avatar">А</div>
+    <span>Айгуль</span>
+    <span class="premium-badge">★ Pro</span>
+  </a>
+</header>
+
+<div class="offline-page">
+  <div class="offline-hero">
+    <div class="offline-status">Готово к офлайну</div>
+    <div class="offline-title">Скачать перед поездкой</div>
+    <div class="offline-sub">Карты, руководства, аудио — всё будет работать без интернета в Мекке и Медине</div>
+    <div class="storage-bar">
+      <div class="storage-row">
+        <span>Скачано: <span id="downloadedTotal">86 MB</span></span>
+        <span class="free">Свободно: 1.2 GB</span>
+      </div>
+      <div class="storage-track">
+        <div class="storage-fill" style="width: 7%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="packs">
+    <div class="progress-overlay" id="progressOverlay">
+      <div>📥 Загрузка: <span id="progressName">...</span></div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width: 0%"></div></div>
+      <div style="font-size: 11px; margin-top: 4px;"><span id="progressPercent">0%</span></div>
+    </div>
+
+    <div class="section-label">📍 Карты</div>
+    <div class="pack-card">
+      <div class="pack-icon">🗺</div>
+      <div class="pack-info">
+        <div class="pack-name">Карта Мекки</div>
+        <div class="pack-meta">42 MB · 380 мест · обновлено сегодня</div>
+      </div>
+      <div class="pack-action">
+        <button class="done" data-pack="mecca-map">✓ Скачано</button>
+      </div>
+    </div>
+    <div class="pack-card">
+      <div class="pack-icon">🗺</div>
+      <div class="pack-info">
+        <div class="pack-name">Карта Медины</div>
+        <div class="pack-meta">28 MB · 200 мест · обновлено сегодня</div>
+      </div>
+      <div class="pack-action">
+        <button class="done" data-pack="medina-map">✓ Скачано</button>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top: 24px;">📖 Руководства</div>
+    <div class="pack-card">
+      <div class="pack-icon">📖</div>
+      <div class="pack-info">
+        <div class="pack-name">Умра — полное руководство</div>
+        <div class="pack-meta">12 MB · 4 этапа · все языки</div>
+      </div>
+      <div class="pack-action">
+        <button class="done" data-pack="umrah-guide">✓ Скачано</button>
+      </div>
+    </div>
+    <div class="pack-card">
+      <div class="pack-icon">📖</div>
+      <div class="pack-info">
+        <div class="pack-name">Хадж — полное руководство</div>
+        <div class="pack-meta">18 MB · 5 дней · все языки</div>
+      </div>
+      <div class="pack-action">
+        <button data-pack="hajj-guide" onclick="downloadPack(this)">↓ Скачать</button>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top: 24px;">🔊 Аудио</div>
+    <div class="pack-card">
+      <div class="pack-icon">🎙</div>
+      <div class="pack-info">
+        <div class="pack-name">Дуа на казахском</div>
+        <div class="pack-meta">34 MB · 28 файлов · Шейх Абдурахман</div>
+      </div>
+      <div class="pack-action">
+        <button data-pack="audio-kz" onclick="downloadPack(this)">↓ Скачать</button>
+      </div>
+    </div>
+    <div class="pack-card">
+      <div class="pack-icon">🎙</div>
+      <div class="pack-info">
+        <div class="pack-name">Дуа на русском</div>
+        <div class="pack-meta">38 MB · 28 файлов · Шейх Абдурахман</div>
+      </div>
+      <div class="pack-action">
+        <button data-pack="audio-ru" onclick="downloadPack(this)">↓ Скачать</button>
+      </div>
+    </div>
+    <div class="pack-card">
+      <div class="pack-icon">🎙</div>
+      <div class="pack-info">
+        <div class="pack-name">Дуа на арабском</div>
+        <div class="pack-meta">42 MB · 28 файлов · оригинальное произношение</div>
+      </div>
+      <div class="pack-action">
+        <button data-pack="audio-ar" onclick="downloadPack(this)">↓ Скачать</button>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn btn-outline" onclick="downloadAll()">📥 Скачать всё</button>
+      <button class="btn btn-outline" onclick="confirmDelete()" style="color: var(--red); border-color: var(--red);">🗑 Удалить всё</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<nav class="tab-bar">
+  <a href="app.html" class="tab">
+    <div class="tab-icon">🗺</div>
+    Карта
+  </a>
+  <a href="guides.html" class="tab">
+    <div class="tab-icon">📖</div>
+    Обряды
+  </a>
+  <a href="offline.html" class="tab active">
+    <div class="tab-icon">📡</div>
+    Офлайн
+  </a>
+  <a href="favorites.html" class="tab">
+    <div class="tab-icon">⭐</div>
+    Избранное
+  </a>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="assets/data.js"></script>
+<script>
+  let downloading = false;
+
+  function downloadPack(btn) {
+    if (downloading) {
+      showToast('Подождите завершения текущей загрузки', 'warning');
+      return;
+    }
+    const packName = btn.parentElement.parentElement.querySelector('.pack-name').textContent;
+    const packMeta = btn.parentElement.parentElement.querySelector('.pack-meta').textContent;
+    const size = parseInt(packMeta.match(/(\d+) MB/)[1]);
+
+    downloading = true;
+    btn.textContent = '⏳ Загрузка...';
+    btn.className = 'downloading';
+
+    document.getElementById('progressOverlay').style.display = 'block';
+    document.getElementById('progressName').textContent = packName;
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 100 / (size * 2); // simulate by file size
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        btn.textContent = '✓ Скачано';
+        btn.className = 'done';
+        downloading = false;
+        showToast(`✓ ${packName} готов для офлайна`, 'success');
+        setTimeout(() => {
+          document.getElementById('progressOverlay').style.display = 'none';
+          document.getElementById('progressFill').style.width = '0%';
+        }, 1000);
+      }
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('progressPercent').textContent = Math.floor(progress) + '%';
+    }, 100);
+  }
+
+  function downloadAll() {
+    showToast('Начинаем загрузку всех пакетов...', 'success');
+    const buttons = document.querySelectorAll('.pack-action button:not(.done)');
+    buttons.forEach((btn, i) => {
+      setTimeout(() => downloadPack(btn), i * 3500);
+    });
+  }
+
+  function confirmDelete() {
+    if (confirm('Удалить все скачанные данные?\n\nКарты и руководства перестанут работать офлайн.')) {
+      document.querySelectorAll('.pack-action button.done').forEach(btn => {
+        btn.textContent = '↓ Скачать';
+        btn.className = '';
+        btn.onclick = function() { downloadPack(this); };
+      });
+      document.getElementById('downloadedTotal').textContent = '0 MB';
+      showToast('Все данные удалены', 'warning');
+    }
+  }
+
+  function showToast(message, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = message;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takia — Место</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/[email protected]/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .hero-photo {
+    height: 220px;
+    background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hero-photo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top right, rgba(201,164,74,0.3) 0%, transparent 60%);
+  }
+  .hero-emoji {
+    font-size: 96px;
+    position: relative;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+  }
+  .place-detail {
+    background: white;
+    padding: 24px 20px;
+    border-radius: 24px 24px 0 0;
+    margin-top: -20px;
+    position: relative;
+    z-index: 2;
+  }
+  .detail-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--green-deep);
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .detail-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green-bg);
+    color: var(--green-deep);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .detail-stats {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .stat-block {
+    flex: 1;
+    min-width: 100px;
+  }
+  .stat-block .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-mute);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .stat-block .val {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .stat-block .val.rating { color: var(--gold); }
+  .stat-block .val.open { color: var(--green-light); }
+  .stat-block .val.closed { color: var(--red); }
+  .actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .action-btn {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .action-btn:hover {
+    background: var(--green-bg);
+    border-color: var(--green-deep);
+    color: var(--green-deep);
+  }
+  .action-btn .icon {
+    display: block;
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .section-block {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .section-block:last-child { border-bottom: none; }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .section-text {
+    color: var(--ink-soft);
+    line-height: 1.65;
+    font-size: 14px;
+  }
+  .features-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .feature-item::before {
+    content: "✓";
+    color: var(--green-light);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .mini-map {
+    height: 180px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 8px;
+    border: 1px solid var(--line);
+  }
+  #placeMap { width: 100%; height: 100%; }
+  .hours-list .hour-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .hour-row .day { color: var(--ink-mute); font-weight: 600; }
+  .hour-row .time { color: var(--ink); font-weight: 600; }
+  .similar-places {
+    background: var(--bg-soft);
+    margin: 0 -20px -24px;
+    padding: 20px;
+  }
+  .similar-list {
+    display: grid;
+    gap: 10px;
+  }
+  .similar-card {
+    background: white;
+    padding: 12px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+  }
+  .similar-card:hover { border-color: var(--green-deep); }
+  .similar-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .similar-info { flex: 1; }
+  .similar-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .similar-meta { font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
+  .similar-distance { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--green-light); }
+</style>
+</head>
+<body>
+
+<!-- BACK BAR -->
+<div class="back-bar">
+  <button class="back-btn" onclick="history.back()">← Назад</button>
+  <div class="back-bar-title" id="backTitle">Место</div>
+  <button class="fav-toggle" id="favBtn" onclick="toggleFav()">☆</button>
+</div>
+
+<!-- HERO PHOTO -->
+<div class="hero-photo">
+  <div class="hero-emoji" id="heroEmoji">📍</div>
+</div>
+
+<!-- PLACE DETAIL -->
+<div class="place-detail">
+  <h1 class="detail-name" id="placeName">Загрузка...</h1>
+  <div class="detail-category" id="placeCategory"></div>
+
+  <div class="detail-stats">
+    <div class="stat-block">
+      <div class="lbl">Рейтинг</div>
+      <div class="val rating" id="statRating">★ —</div>
+    </div>
+    <div class="stat-block">
+      <div class="lbl">Расстояние</div>
+      <div class="val" id="statDistance">— м</div>
+    </div>
+    <div class="stat-block">
+      <div class="lbl">Сейчас</div>
+      <div class="val" id="statOpen">—</div>
+    </div>
+    <div class="stat-block" id="priceBlock" style="display:none;">
+      <div class="lbl">Цены</div>
+      <div class="val" id="statPrice">—</div>
+    </div>
+  </div>
+
+  <div class="actions-row">
+    <div class="action-btn" onclick="buildRoute()">
+      <span class="icon">🧭</span>
+      Маршрут
+    </div>
+    <div class="action-btn" onclick="callPlace()">
+      <span class="icon">📞</span>
+      Позвонить
+    </div>
+    <div class="action-btn" onclick="sharePlace()">
+      <span class="icon">↗</span>
+      Поделиться
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Описание</div>
+    <div class="section-text" id="placeDescription"></div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Полезная информация</div>
+    <div class="features-list" id="featuresList"></div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Часы работы</div>
+    <div class="section-text" id="placeHours"></div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">На карте</div>
+    <div class="mini-map">
+      <div id="placeMap"></div>
+    </div>
+  </div>
+
+  <div class="similar-places">
+    <div class="section-label" style="margin-bottom: 12px;">Похожие места рядом</div>
+    <div class="similar-list" id="similarList"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/[email protected]/dist/leaflet.js"></script>
+<script src="assets/data.js"></script>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const placeId = urlParams.get('id') || 'p001';
+  const place = getPlaceById(placeId);
+
+  if (!place) {
+    document.body.innerHTML = '<div style="padding:60px 20px; text-align:center;"><h2>Место не найдено</h2><p><a href="app.html">← Вернуться к карте</a></p></div>';
+  } else {
+    const cat = CATEGORIES[place.category];
+
+    // Set hero emoji from category icon or photos
+    document.getElementById('heroEmoji').textContent =
+      place.photos && place.photos[0] ? place.photos[0] : cat.icon;
+
+    // Title
+    document.getElementById('backTitle').textContent = place.name;
+    document.getElementById('placeName').textContent = place.name;
+    document.getElementById('placeCategory').innerHTML = `<span>${cat.icon}</span> ${cat.name}${place.cuisine ? ' · ' + place.cuisine : ''}`;
+
+    // Stats
+    document.getElementById('statRating').textContent = `★ ${place.rating}`;
+    document.getElementById('statDistance').textContent =
+      place.distanceFromHaram < 1000 ? `${place.distanceFromHaram} м` : `${(place.distanceFromHaram/1000).toFixed(1)} км`;
+    const statOpen = document.getElementById('statOpen');
+    if (place.openNow) {
+      statOpen.textContent = 'Открыто';
+      statOpen.className = 'val open';
+    } else {
+      statOpen.textContent = 'Закрыто';
+      statOpen.className = 'val closed';
+    }
+    if (place.priceLevel) {
+      document.getElementById('priceBlock').style.display = 'block';
+      document.getElementById('statPrice').textContent = getCurrencyLabel(place.priceLevel);
+    }
+
+    // Description
+    document.getElementById('placeDescription').textContent = place.description;
+
+    // Features
+    if (place.features && place.features.length) {
+      document.getElementById('featuresList').innerHTML =
+        place.features.map(f => `<div class="feature-item">${f}</div>`).join('');
+    }
+
+    // Hours
+    document.getElementById('placeHours').textContent = place.hours;
+
+    // Favorite state
+    if (isFavorite(place.id)) {
+      document.getElementById('favBtn').textContent = '⭐';
+      document.getElementById('favBtn').classList.add('active');
+    }
+
+    // Mini map
+    const map = L.map('placeMap', {
+      zoomControl: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      dragging: true
+    }).setView([place.lat, place.lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OSM'
+    }).addTo(map);
+    L.divIcon({
+      className: '',
+      html: `<div class="marker-pin" style="background:${cat.color}">${cat.icon}</div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+    L.marker([place.lat, place.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div class="marker-pin" style="background:${cat.color}">${cat.icon}</div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      })
+    }).addTo(map);
+
+    // Similar places — same category, same city, different id, top 4 by distance
+    const similar = PLACES
+      .filter(p => p.category === place.category && p.city === place.city && p.id !== place.id)
+      .slice(0, 4);
+    document.getElementById('similarList').innerHTML = similar.map(p => `
+      <div class="similar-card" onclick="window.location.href='place.html?id=${p.id}'">
+        <div class="similar-icon" style="background:${cat.bgColor}; color:${cat.color}">${cat.icon}</div>
+        <div class="similar-info">
+          <div class="similar-name">${p.name}</div>
+          <div class="similar-meta">★ ${p.rating} · ${p.cuisine || ''}</div>
+        </div>
+        <div class="similar-distance">${p.distanceFromHaram < 1000 ? p.distanceFromHaram + 'м' : (p.distanceFromHaram/1000).toFixed(1) + 'км'}</div>
+      </div>
+    `).join('');
+  }
+
+  function toggleFav() {
+    toggleFavorite(place.id);
+    const btn = document.getElementById('favBtn');
+    if (isFavorite(place.id)) {
+      btn.textContent = '⭐';
+      btn.classList.add('active');
+      showToast('Добавлено в избранное ⭐', 'success');
+    } else {
+      btn.textContent = '☆';
+      btn.classList.remove('active');
+      showToast('Убрано из избранного');
+    }
+  }
+
+  function buildRoute() {
+    showToast('Открываю маршрут пешком от вас...', 'success');
+    setTimeout(() => {
+      // In real product would open routing screen. For demo, just show toast.
+      showToast(`Пешком ~${Math.round(place.distanceFromHaram / 80)} мин`, 'success');
+    }, 1200);
+  }
+
+  function callPlace() {
+    if (place.phone) {
+      if (confirm(`Позвонить ${place.name}?\n\n${place.phone}`)) {
+        window.location.href = `tel:${place.phone}`;
+      }
+    } else {
+      showToast('Телефон не указан', 'warning');
+    }
+  }
+
+  function sharePlace() {
+    const text = `${place.name} — ${place.description.substring(0, 80)}...`;
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: place.name, text, url });
+    } else {
+      navigator.clipboard.writeText(url);
+      showToast('Ссылка скопирована 📋', 'success');
+    }
+  }
+
+  function showToast(message, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = message;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+
+</body>
+</html>

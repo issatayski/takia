@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takia — Руководства</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .guides-page { padding: 24px 20px 100px; }
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--green-deep);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .page-subtitle {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+  .main-guides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+  .guide-card {
+    background: linear-gradient(160deg, var(--green-deep), var(--green-mid));
+    color: white;
+    border-radius: 16px;
+    padding: 22px 18px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .guide-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .guide-card::before {
+    content: "";
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, rgba(201,164,74,0.3) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .guide-card.hajj {
+    background: linear-gradient(160deg, #8a6500, #c9a44a);
+  }
+  .guide-eyebrow {
+    font-size: 10px;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .guide-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .guide-desc {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .guide-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .guide-progress-row {
+    margin-top: 10px;
+    position: relative;
+  }
+  .progress-track {
+    background: rgba(255,255,255,0.2);
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    background: var(--gold-light);
+    height: 100%;
+    border-radius: 2px;
+  }
+  .progress-label {
+    font-size: 10px;
+    color: var(--gold-light);
+    margin-top: 4px;
+  }
+  .additional {
+    margin-top: 24px;
+  }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .additional-list {
+    display: grid;
+    gap: 10px;
+  }
+  .additional-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .additional-card:hover { border-color: var(--green-deep); background: var(--bg-soft); }
+  .additional-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--green-bg);
+    color: var(--green-deep);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .additional-text { flex: 1; }
+  .additional-title { font-weight: 700; color: var(--ink); font-size: 14px; }
+  .additional-sub { font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- APP HEADER -->
+<header class="app-header">
+  <a href="app.html" class="app-logo">
+    <div class="app-logo-mark">ﷲ</div>
+    Takia
+  </a>
+  <a href="favorites.html" class="user-chip">
+    <div class="user-avatar">А</div>
+    <span>Айгуль</span>
+    <span class="premium-badge">★ Pro</span>
+  </a>
+</header>
+
+<div class="guides-page">
+  <h1 class="page-title">Руководства</h1>
+  <p class="page-subtitle">Пошаговые инструкции на родном языке. С аудио, дуа и переводом.</p>
+
+  <div class="main-guides">
+    <div class="guide-card" onclick="openGuide('umrah', 1)">
+      <div class="guide-eyebrow">Малое паломничество</div>
+      <div class="guide-title">Умра</div>
+      <div class="guide-desc">4 этапа · ~3 часа</div>
+      <div class="guide-progress-row">
+        <div class="progress-track"><div class="progress-fill" style="width: 25%"></div></div>
+        <div class="progress-label">Шаг 1 из 4 пройден</div>
+      </div>
+      <div class="guide-meta">
+        <span>📖 4 этапа</span>
+        <span>🔊 Аудио</span>
+      </div>
+    </div>
+
+    <div class="guide-card hajj" onclick="openGuide('hajj', 1)">
+      <div class="guide-eyebrow">Большое паломничество</div>
+      <div class="guide-title">Хадж</div>
+      <div class="guide-desc">5 дней · полный гид</div>
+      <div class="guide-progress-row">
+        <div class="progress-track"><div class="progress-fill" style="width: 0%"></div></div>
+        <div class="progress-label">Ещё не начат</div>
+      </div>
+      <div class="guide-meta">
+        <span>📖 5 этапов</span>
+        <span>🔊 Аудио</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="additional">
+    <div class="section-label">Дополнительно</div>
+    <div class="additional-list">
+      <div class="additional-card" onclick="showToast('Подготовка к поездке — скоро')">
+        <div class="additional-icon">🎒</div>
+        <div class="additional-text">
+          <div class="additional-title">Подготовка к поездке</div>
+          <div class="additional-sub">Что взять с собой, чек-листы</div>
+        </div>
+        <div style="color: var(--ink-mute)">→</div>
+      </div>
+
+      <div class="additional-card" onclick="showToast('Зиярат в Медине — скоро')">
+        <div class="additional-icon">🕌</div>
+        <div class="additional-text">
+          <div class="additional-title">Зиярат в Медине</div>
+          <div class="additional-sub">Исторические места и маршруты</div>
+        </div>
+        <div style="color: var(--ink-mute)">→</div>
+      </div>
+
+      <div class="additional-card" onclick="showToast('Что делать при ошибке — скоро')">
+        <div class="additional-icon">⚠</div>
+        <div class="additional-text">
+          <div class="additional-title">Что делать при ошибке</div>
+          <div class="additional-sub">Кафара, восстановление обрядов</div>
+        </div>
+        <div style="color: var(--ink-mute)">→</div>
+      </div>
+
+      <div class="additional-card" onclick="showToast('Дуа на все случаи — скоро')">
+        <div class="additional-icon">📿</div>
+        <div class="additional-text">
+          <div class="additional-title">Дуа на все случаи</div>
+          <div class="additional-sub">Сборник из 50+ дуа</div>
+        </div>
+        <div style="color: var(--ink-mute)">→</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<nav class="tab-bar">
+  <a href="app.html" class="tab">
+    <div class="tab-icon">🗺</div>
+    Карта
+  </a>
+  <a href="guides.html" class="tab active">
+    <div class="tab-icon">📖</div>
+    Обряды
+  </a>
+  <a href="offline.html" class="tab">
+    <div class="tab-icon">📡</div>
+    Офлайн
+  </a>
+  <a href="favorites.html" class="tab">
+    <div class="tab-icon">⭐</div>
+    Избранное
+  </a>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="assets/data.js"></script>
+<script>
+  function openGuide(type, step) {
+    window.location.href = `guide.html?type=${type}&step=${step}`;
+  }
+
+  function showToast(message, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = message;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+
+</body>
+</html>

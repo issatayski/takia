@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takia — Руководство</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .guide-hero {
+    background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+    color: white;
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .guide-hero.hajj {
+    background: linear-gradient(135deg, #8a6500, #c9a44a);
+  }
+  .guide-hero::before {
+    content: "";
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, rgba(201,164,74,0.3) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .step-counter {
+    font-size: 11px;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .step-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .step-progress {
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .step-progress-fill {
+    height: 100%;
+    background: var(--gold-light);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .step-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--gold-light);
+    position: relative;
+  }
+
+  /* Step content */
+  .step-content { padding: 24px 20px 100px; }
+  .step-intro {
+    background: var(--green-bg);
+    border-left: 3px solid var(--green-deep);
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--green-deep);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .section-label {
+    display: inline-block;
+    background: var(--gold-bg);
+    color: #8a6500;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+  }
+  .section-block {
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--green-deep);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  .section-content {
+    color: var(--ink-soft);
+    line-height: 1.7;
+    font-size: 14px;
+    white-space: pre-line;
+  }
+
+  /* Dua block */
+  .dua-block {
+    background: linear-gradient(135deg, #fefbf2 0%, #fef6e7 100%);
+    border-left: 3px solid var(--gold);
+    padding: 20px;
+    border-radius: 8px;
+    margin: 14px 0;
+  }
+  .dua-arabic {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    color: var(--green-deep);
+    text-align: right;
+    direction: rtl;
+    margin-bottom: 14px;
+    line-height: 1.5;
+    font-weight: 600;
+  }
+  .dua-translit {
+    font-size: 13px;
+    color: var(--ink);
+    font-style: italic;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .dua-translation {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    padding-top: 8px;
+    border-top: 1px solid rgba(201,164,74,0.3);
+  }
+  .dua-play {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1px solid var(--gold);
+    color: #8a6500;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Warning */
+  .warning-block {
+    background: #fff3e0;
+    border-left: 3px solid #ff9f43;
+    padding: 14px 18px;
+    border-radius: 4px;
+    margin: 14px 0;
+  }
+  .warning-block .warning-title {
+    color: #c75500;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .warning-block .warning-content {
+    color: #5a3500;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+
+  /* Audio block */
+  .audio-block {
+    background: var(--green-bg);
+    padding: 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 14px 0;
+  }
+  .audio-play-btn {
+    width: 48px;
+    height: 48px;
+    background: var(--green-deep);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .audio-info { flex: 1; }
+  .audio-title { font-weight: 700; color: var(--green-deep); font-size: 14px; }
+  .audio-meta { color: var(--ink-mute); font-size: 12px; margin-top: 2px; }
+
+  /* Navigation */
+  .step-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid var(--line);
+    padding: 12px 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+  }
+  .nav-btn-prev {
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .nav-btn-next {
+    background: var(--green-deep);
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    flex: 1;
+    font-family: inherit;
+    font-size: 15px;
+  }
+  .nav-btn-next:hover { background: var(--green-light); }
+  .nav-btn-prev:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Step stepper */
+  .step-stepper {
+    display: flex;
+    gap: 4px;
+    padding: 12px 20px;
+    background: white;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+  }
+  .step-dot {
+    flex: 1;
+    min-width: 60px;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    background: var(--bg-soft);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .step-dot.done {
+    background: var(--green-bg);
+    color: var(--green-deep);
+    border-color: var(--green-light);
+  }
+  .step-dot.active {
+    background: var(--green-deep);
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<!-- BACK BAR -->
+<div class="back-bar">
+  <button class="back-btn" onclick="window.location.href='guides.html'">← К руководствам</button>
+  <div class="back-bar-title" id="backTitle">Руководство</div>
+  <button class="fav-toggle">📖</button>
+</div>
+
+<!-- STEP STEPPER -->
+<div class="step-stepper" id="stepStepper"></div>
+
+<!-- STEP HERO -->
+<div class="guide-hero" id="guideHero">
+  <div class="step-counter" id="stepCounter">Шаг 1 из 4</div>
+  <h1 class="step-title" id="stepTitle">...</h1>
+  <p class="step-subtitle" id="stepSubtitle">...</p>
+  <div class="step-progress">
+    <div class="step-progress-fill" id="progressFill"></div>
+  </div>
+  <div class="step-meta">
+    <span id="stepDuration">⏱ —</span>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="step-content">
+  <div class="step-intro" id="stepIntro"></div>
+  <div id="sectionsContainer"></div>
+</div>
+
+<!-- NAV -->
+<div class="step-nav">
+  <button class="nav-btn-prev" id="prevBtn" onclick="prevStep()">← Назад</button>
+  <button class="nav-btn-next" onclick="nextStep()" id="nextBtn">Готово, дальше →</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="assets/data.js"></script>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const guideType = urlParams.get('type') || 'umrah';
+  const stepNum = parseInt(urlParams.get('step') || '1');
+
+  const guide = GUIDES[guideType];
+  if (!guide) {
+    document.body.innerHTML = '<div style="padding:60px 20px; text-align:center;"><h2>Руководство не найдено</h2></div>';
+    throw new Error('Guide not found');
+  }
+
+  const step = guide.steps.find(s => s.id === stepNum);
+  if (!step) {
+    document.body.innerHTML = '<div style="padding:60px 20px; text-align:center;"><h2>Шаг не найден</h2><p><a href="guides.html">← К руководствам</a></p></div>';
+    throw new Error('Step not found');
+  }
+
+  // Hero color
+  if (guideType === 'hajj') {
+    document.getElementById('guideHero').classList.add('hajj');
+  }
+
+  // Title and meta
+  document.getElementById('backTitle').textContent = guide.title;
+  document.getElementById('stepCounter').textContent = `${guide.title} · Шаг ${stepNum} из ${guide.steps.length}`;
+  document.getElementById('stepTitle').textContent = step.title;
+  document.getElementById('stepSubtitle').textContent = step.subtitle;
+  document.getElementById('stepDuration').textContent = '⏱ ' + step.duration;
+  document.getElementById('stepIntro').textContent = step.intro;
+
+  // Progress bar
+  const progress = (stepNum / guide.steps.length) * 100;
+  document.getElementById('progressFill').style.width = progress + '%';
+
+  // Stepper
+  const stepperEl = document.getElementById('stepStepper');
+  stepperEl.innerHTML = guide.steps.map(s => {
+    const isActive = s.id === stepNum;
+    const isDone = s.id < stepNum;
+    return `<div class="step-dot ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}"
+            onclick="window.location.href='guide.html?type=${guideType}&step=${s.id}'">
+            ${s.id}. ${s.title.split(' ').slice(0,2).join(' ')}
+          </div>`;
+  }).join('');
+
+  // Render sections
+  const container = document.getElementById('sectionsContainer');
+  container.innerHTML = step.sections.map(sec => {
+    if (sec.type === 'instruction') {
+      return `
+        <div class="section-block">
+          <span class="section-label">Инструкция</span>
+          <h3 class="section-title">${sec.title}</h3>
+          <div class="section-content">${sec.content}</div>
+        </div>
+      `;
+    } else if (sec.type === 'dua') {
+      return `
+        <div class="section-block">
+          <span class="section-label">Дуа</span>
+          <h3 class="section-title">${sec.title}</h3>
+          <div class="dua-block">
+            <div class="dua-arabic">${sec.arabic}</div>
+            <div class="dua-translit">${sec.translit}</div>
+            <div class="dua-translation">«${sec.translation}»</div>
+            <button class="dua-play" onclick="playDua('${sec.title}')">
+              🔊 Послушать произношение
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (sec.type === 'warning') {
+      return `
+        <div class="section-block">
+          <div class="warning-block">
+            <div class="warning-title">⚠ ${sec.title}</div>
+            <div class="warning-content">${sec.content}</div>
+          </div>
+        </div>
+      `;
+    } else if (sec.type === 'audio') {
+      return `
+        <div class="section-block">
+          <span class="section-label">Аудио</span>
+          <h3 class="section-title">${sec.title}</h3>
+          <div class="audio-block">
+            <button class="audio-play-btn" onclick="playAudio('${sec.title}', '${sec.duration}')">▶</button>
+            <div class="audio-info">
+              <div class="audio-title">${sec.speaker}</div>
+              <div class="audio-meta">⏱ ${sec.duration}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    return '';
+  }).join('');
+
+  // Navigation
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  if (stepNum === 1) {
+    prevBtn.disabled = true;
+  }
+  if (stepNum === guide.steps.length) {
+    nextBtn.textContent = '🎉 Завершить руководство';
+  }
+
+  function prevStep() {
+    if (stepNum > 1) {
+      window.location.href = `guide.html?type=${guideType}&step=${stepNum - 1}`;
+    }
+  }
+
+  function nextStep() {
+    if (stepNum < guide.steps.length) {
+      showToast('Шаг отмечен как пройденный ✓', 'success');
+      setTimeout(() => {
+        window.location.href = `guide.html?type=${guideType}&step=${stepNum + 1}`;
+      }, 800);
+    } else {
+      showToast('🎉 Поздравляем, руководство пройдено!', 'success');
+      setTimeout(() => {
+        window.location.href = 'guides.html';
+      }, 1500);
+    }
+  }
+
+  function playDua(title) {
+    showToast('🔊 Воспроизведение: ' + title, 'success');
+  }
+
+  function playAudio(title, duration) {
+    showToast(`▶ Воспроизведение аудио (${duration})`, 'success');
+  }
+
+  function showToast(message, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = message;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+
+</body>
+</html>
