@@ -70,6 +70,38 @@
     background: transparent;
   }
   .map-search .search-icon { color: var(--ink-mute); font-size: 16px; }
+
+  /* 2GIS-style place labels on map */
+  .leaflet-tooltip.place-label {
+    background: rgba(255,255,255,0.95);
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(13,77,53,0.18);
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+  .leaflet-tooltip.place-label::before { display: none; }
+  .leaflet-tooltip.haram-label {
+    background: var(--green-deep);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(13,77,53,0.3);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 12px;
+    white-space: nowrap;
+  }
+  .leaflet-tooltip.haram-label::before { display: none; }
+  /* Hide labels at low zoom to avoid clutter — handled by JS too */
+  .leaflet-marker-icon { transition: transform 0.15s ease; }
+  /* Smoother map background while tiles load */
+  .leaflet-container { background: #eef2f0; }
 </style>
 </head>
 <body>
@@ -202,15 +234,26 @@
     const center = currentCity === 'Mecca' ? [21.4225, 39.8262] : [24.4672, 39.6112];
     map = L.map('map', {
       zoomControl: false,
-      scrollWheelZoom: true
+      scrollWheelZoom: true,
+      zoomSnap: 0.5
     }).setView(center, 16);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
+    // CARTO Voyager — colorful, detailed streets and POI like 2GIS / modern maps
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      subdomains: 'abcd',
+      attribution: '© OpenStreetMap, © CARTO'
     }).addTo(map);
+
+    // Hide place labels when zoomed out (like 2GIS) to avoid clutter
+    map.on('zoomend', function() {
+      const showLabels = map.getZoom() >= 15;
+      document.querySelectorAll('.leaflet-tooltip.place-label').forEach(function(el) {
+        el.style.display = showLabels ? '' : 'none';
+      });
+    });
 
     addKaabaMarker();
     renderPlaces();
@@ -224,8 +267,9 @@
       iconSize: [50, 50],
       iconAnchor: [25, 25]
     });
-    L.marker([point.lat, point.lng], { icon })
+    L.marker([point.lat, point.lng], { icon, zIndexOffset: 1000 })
       .addTo(map)
+      .bindTooltip(point.name, { permanent: true, direction: 'top', offset: [0, -28], className: 'haram-label' })
       .bindPopup(`<div class="popup-card"><div class="name">${point.name}</div><div class="meta">Главная святыня</div></div>`);
   }
 
@@ -267,6 +311,7 @@
       });
       const marker = L.marker([place.lat, place.lng], { icon })
         .addTo(map)
+        .bindTooltip(place.name, { permanent: true, direction: 'right', offset: [16, 0], className: 'place-label' })
         .bindPopup(`
           <div class="popup-card">
             <div class="name">${place.name}</div>

@@ -348,8 +348,9 @@
       doubleClickZoom: false,
       dragging: true
     }).setView([place.lat, place.lng], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OSM'
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      attribution: '© OSM, © CARTO'
     }).addTo(map);
     L.divIcon({
       className: '',
