@@ -29,7 +29,7 @@
   button{font-family:inherit;cursor:pointer;border:none;background:none}
 
   /* ===== APP SHELL ===== */
-  .app-shell{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:560px;margin:0 auto;background:var(--white);position:relative;box-shadow:0 0 60px rgba(0,0,0,.06)}
+  .app-shell{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;background:var(--white);position:relative}
 
   /* ===== TOP BAR ===== */
   .topbar{
@@ -258,6 +258,57 @@
   .toast.warning{background:var(--gold)}
 
   .leaflet-bar a,.leaflet-bar a:hover{width:32px;height:32px;line-height:32px}
+
+  /* ===== DESKTOP / WIDE SCREENS ===== */
+  @media (min-width:760px){
+    .topbar{padding:16px 32px}
+    .tb-logo{font-size:23px}
+    /* Map fills the whole width — that's good for a map */
+    .filters{padding:14px 28px}
+    .cuisines{padding:12px 28px}
+    /* Results sheet beside/over map: make it a wider strip */
+    .results-sheet{max-height:34vh}
+    .rs-head{padding:14px 28px 9px}
+    .place-row{padding:13px 28px}
+    /* Place rows in a responsive grid on wide screens */
+    #rsList,#favContent .fav-list{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+      gap:0
+    }
+    #rsList .place-row,#favContent .place-row{
+      border-bottom:1px solid var(--bg-soft);border-right:1px solid var(--bg-soft)
+    }
+    /* Text-heavy screens: center content for readability */
+    .screen-pad{max-width:880px;margin:0 auto;width:100%;padding:32px 28px 40px}
+    .g-cards{grid-template-columns:1fr 1fr;gap:18px}
+    .g-card{padding:28px 24px}
+    .g-card .ti{font-size:30px}
+    /* Place detail centered */
+    #s-place>div,#s-step>div{max-width:760px;margin:0 auto;width:100%}
+    .pd-hero{height:240px;border-radius:0}
+    .pd-hero .em{font-size:100px}
+    .pd-body{padding:30px 36px}
+    .pd-name{font-size:32px}
+    .pd-actions{max-width:520px}
+    .gs-hero{padding:30px 40px}
+    .gs-body{padding:28px 40px 100px;max-width:780px;margin:0 auto;width:100%}
+    .gs-stepper{padding:14px 40px}
+    .gs-nav{padding:14px 40px}
+    /* Profile centered */
+    .pf-head{padding:40px 40px 32px;text-align:left}
+    .pf-av{width:84px;height:84px;font-size:38px}
+    .pf-name{font-size:28px}
+    .pf-trip,.pf-prog,.pf-menu{max-width:720px;margin-left:auto;margin-right:auto}
+    .pf-trip{margin-top:20px}
+    /* Bottom nav: keep centered, not stretched edge to edge */
+    .bottom-nav{padding:10px 0 12px;justify-content:center;gap:20px}
+    .nav-item .ic{font-size:23px}
+    .nav-item{font-size:12px;max-width:160px;flex:0 1 160px}
+  }
+  @media (min-width:1100px){
+    .pf-head{padding:48px 64px 36px}
+    .screen-pad{padding:40px 32px 48px}
+  }
 </style>
 </head>
 <body>
