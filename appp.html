@@ -2,6 +2,10 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Takia — Цифровой спутник паломника</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1666,18 +1670,1864 @@ function renderProfile(){
 /* ============ INIT ============ */
 document.getElementById('tbAction').textContent=CURRENT_USER.name[0];
 buildFilters();
-if(typeof L!=='undefined'){
-  initMap();
-}else{
-  document.getElementById('mapBox').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-mute);padding:30px;text-align:center">Не удалось загрузить карту.<br>Проверьте подключение к интернету.</div>';
-  refreshMapListOnly();
-}
+updateTopbar('map');
+
 function refreshMapListOnly(){
   var places=filteredPlaces();
   document.getElementById('rsCount').textContent=places.length+' '+decl(places.length);
   renderRsList(places);
 }
+
+// Draw a clean static SVG map (used if Leaflet can't load for any reason)
+function drawSvgMap(){
+  var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
+  var places=filteredPlaces();
+  document.getElementById('rsCount').textContent=places.length+' '+decl(places.length);
+  renderRsList(places);
+
+  var pts=places.concat([{lat:ref.lat,lng:ref.lng}]);
+  var minLat=Math.min.apply(null,pts.map(function(p){return p.lat}));
+  var maxLat=Math.max.apply(null,pts.map(function(p){return p.lat}));
+  var minLng=Math.min.apply(null,pts.map(function(p){return p.lng}));
+  var maxLng=Math.max.apply(null,pts.map(function(p){return p.lng}));
+  var pLat=(maxLat-minLat)*0.28+0.0012, pLng=(maxLng-minLng)*0.28+0.0012;
+  minLat-=pLat;maxLat+=pLat;minLng-=pLng;maxLng+=pLng;
+  var W=1000,H=1000;
+  function X(l){return ((l-minLng)/(maxLng-minLng))*W}
+  function Y(l){return H-((l-minLat)/(maxLat-minLat))*H}
+  var hx=X(ref.lng),hy=Y(ref.lat);
+
+  var roads='';
+  for(var i=1;i<9;i++){
+    roads+='<line x1="'+(W/9*i)+'" y1="0" x2="'+(W/9*i)+'" y2="'+H+'" stroke="#dde6e1" stroke-width="'+(i%2?5:9)+'"/>';
+    roads+='<line x1="0" y1="'+(H/9*i)+'" x2="'+W+'" y2="'+(H/9*i)+'" stroke="#dde6e1" stroke-width="'+(i%2?5:9)+'"/>';
+  }
+  roads+='<circle cx="'+hx+'" cy="'+hy+'" r="130" fill="none" stroke="#d4ddd8" stroke-width="8"/>';
+  roads+='<circle cx="'+hx+'" cy="'+hy+'" r="250" fill="none" stroke="#d4ddd8" stroke-width="6"/>';
+  for(var a=0;a<360;a+=45){
+    var r=a*Math.PI/180;
+    roads+='<line x1="'+hx+'" y1="'+hy+'" x2="'+(hx+Math.cos(r)*440)+'" y2="'+(hy+Math.sin(r)*440)+'" stroke="#dde6e1" stroke-width="6"/>';
+  }
+
+  // spread overlapping markers
+  var pos=places.map(function(p){return{p:p,x:X(p.lng),y:Y(p.lat)}});
+  var md=118;
+  for(var it=0;it<70;it++){
+    for(var a1=0;a1<pos.length;a1++)for(var b1=a1+1;b1<pos.length;b1++){
+      var A=pos[a1],B=pos[b1],dx=B.x-A.x,dy=B.y-A.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+      if(d<md){var pu=(md-d)/2,ux=dx/d,uy=dy/d;A.x-=ux*pu;A.y-=uy*pu;B.x+=ux*pu;B.y+=uy*pu;}
+    }
+  }
+  pos.forEach(function(o){o.x=Math.max(40,Math.min(W-40,o.x));o.y=Math.max(40,Math.min(H-40,o.y));});
+
+  var pins='';
+  pos.forEach(function(o){
+    var c=CATEGORIES[o.p.category];
+    pins+='<g style="cursor:pointer" transform="translate('+o.x+','+o.y+')" onclick="openPlace(\''+o.p.id+'\')">'+
+      '<circle r="18" fill="'+c.color+'" stroke="#fff" stroke-width="3"/>'+
+      '<text y="6" font-size="16" text-anchor="middle">'+c.icon+'</text>'+
+      '<g transform="translate(23,-10)"><rect rx="5" height="21" width="'+(10+o.p.name.length*6.1)+'" fill="rgba(255,255,255,.96)" stroke="rgba(13,77,53,.15)"/>'+
+      '<text x="6" y="15" font-size="11.5" font-weight="700" fill="#1a2620">'+o.p.name+'</text></g></g>';
+  });
+
+  document.getElementById('mapBox').innerHTML=
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;background:#eef3f0">'+
+    '<rect width="'+W+'" height="'+H+'" fill="#eef3f0"/>'+
+    '<circle cx="'+(W*0.16)+'" cy="'+(H*0.19)+'" r="85" fill="#dcebe2"/>'+
+    '<circle cx="'+(W*0.84)+'" cy="'+(H*0.8)+'" r="100" fill="#dcebe2"/>'+
+    roads+
+    '<g transform="translate('+hx+','+hy+')">'+
+    '<circle r="32" fill="#0d4d35" stroke="#c9a44a" stroke-width="4"/>'+
+    '<text y="9" font-size="24" text-anchor="middle" fill="#c9a44a">ﷲ</text>'+
+    '<g transform="translate(0,-50)"><rect x="-58" rx="7" height="25" width="116" fill="#0d4d35"/>'+
+    '<text y="17" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">'+(state.city==='Mecca'?'Аль-Харам':'ан-Набави')+'</text></g></g>'+
+    pins+'</svg>';
+}
+
+// Wait for Leaflet to actually finish loading before deciding.
+// The Leaflet <script> tag may not be done when this code runs.
+(function waitLeaflet(tries){
+  if(typeof L!=='undefined'){          // Leaflet ready -> real interactive map
+    initMap();
+    return;
+  }
+  if(tries<=0){                        // Gave up -> static SVG map (still looks like a map)
+    drawSvgMap();
+    return;
+  }
+  setTimeout(function(){waitLeaflet(tries-1)},150);   // check again in 150ms
+})(40);  // up to ~6 seconds of waiting
+
+// Also re-render SVG fallback when filters change (if in fallback mode)
+var _origRefresh=refreshMap;
+refreshMap=function(){
+  if(typeof L!=='undefined'&&lmap){_origRefresh();}
+  else{drawSvgMap();}
+};
+
+
+</script>
+</body>
+</html>
+
+<title>Takia — Цифровой спутник паломника</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --green-deep:#0d4d35;--green-mid:#166548;--green-light:#1f8259;--green-bg:#e8f3ee;
+    --gold:#c9a44a;--gold-light:#f0d589;--gold-bg:#fef6e7;
+    --ink:#1a2620;--ink-soft:#4a5750;--ink-mute:#7a8a82;
+    --line:#d4dcd7;--bg-soft:#f7faf8;--bg-app:#f3f6f4;--white:#fff;
+    --red:#c75555;
+    --shadow-sm:0 1px 3px rgba(13,77,53,.08);
+    --shadow-md:0 4px 16px rgba(13,77,53,.1);
+    --shadow-lg:0 12px 40px rgba(13,77,53,.15);
+  }
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Manrope',sans-serif;color:var(--ink);background:var(--bg-app);
+    line-height:1.55;font-size:15px;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;
+  }
+  .serif{font-family:'Cormorant Garamond',serif}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+  /* ===== APP SHELL ===== */
+  .app-shell{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;background:var(--white);position:relative}
+
+  /* ===== TOP BAR ===== */
+  .topbar{
+    flex-shrink:0;background:var(--white);border-bottom:1px solid var(--line);
+    padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+    z-index:50;
+  }
+  .tb-logo{display:flex;align-items:center;gap:10px;font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;color:var(--green-deep)}
+  .tb-logo .mark{width:34px;height:34px;background:linear-gradient(135deg,var(--green-deep),var(--green-light));border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
+  .tb-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--green-deep)}
+  .tb-action{width:38px;height:38px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--green-deep)}
+  .tb-back{display:flex;align-items:center;gap:6px;color:var(--green-deep);font-weight:600;font-size:14px;padding:6px 4px}
+
+  /* ===== SCREEN AREA ===== */
+  .screens{flex:1;position:relative;overflow:hidden}
+  .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column}
+  .screen.active{display:flex}
+  .screen-pad{padding:20px 18px 24px}
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav{
+    flex-shrink:0;background:var(--white);border-top:1px solid var(--line);
+    display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:50;
+  }
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;color:var(--ink-mute);font-size:11px;font-weight:600}
+  .nav-item .ic{font-size:21px;line-height:1;transition:transform .15s}
+  .nav-item.active{color:var(--green-deep)}
+  .nav-item.active .ic{transform:translateY(-2px)}
+
+  /* ===== MAP SCREEN ===== */
+  .map-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+  .filters{flex-shrink:0;background:var(--white);padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;background:var(--bg-app);color:var(--ink-soft);border:1px solid var(--line);display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all .15s}
+  .chip.active{background:var(--green-deep);color:#fff;border-color:var(--green-deep)}
+  .chip .dot{width:8px;height:8px;border-radius:50%}
+  .cuisines{flex-shrink:0;background:var(--gold-bg);padding:10px 14px;border-bottom:1px solid var(--line);display:none;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .cuisines::-webkit-scrollbar{display:none}
+  .cuisines.show{display:flex}
+  .cchip{flex-shrink:0;padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600;background:#fff;color:#8a6500;border:1px solid #e8c87a;white-space:nowrap}
+  .cchip.active{background:var(--gold);color:#fff;border-color:var(--gold)}
+
+  /* Map container — strict containment */
+  #mapBox{
+    flex:1;min-height:0;position:relative;width:100%;
+    background:#e8eef0;overflow:hidden;
+  }
+  #leafletMap{position:absolute;inset:0;width:100%;height:100%}
+  .leaflet-container{background:#dfe7e3!important;font-family:'Manrope',sans-serif}
+  .leaflet-control-attribution{font-size:9px!important}
+
+  .map-marker{
+    width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(45deg);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,.3);border:2px solid #fff;
+  }
+  .map-marker span{transform:rotate(-45deg);font-size:15px}
+  .marker-kaaba{
+    width:46px;height:46px;background:#1a1a1a;border:3px solid var(--gold);
+    border-radius:8px;display:flex;align-items:center;justify-content:center;
+    color:var(--gold);font-size:22px;
+    box-shadow:0 0 0 5px rgba(201,164,74,.3),0 4px 14px rgba(0,0,0,.3);
+  }
+  .leaflet-tooltip.lbl{
+    background:rgba(255,255,255,.96);border:none;border-radius:6px;
+    box-shadow:0 2px 7px rgba(13,77,53,.18);color:var(--ink);
+    font-family:'Manrope',sans-serif;font-size:11px;font-weight:700;
+    padding:3px 8px;white-space:nowrap
+  }
+  .leaflet-tooltip.lbl:before{display:none}
+  .leaflet-tooltip.lbl-haram{
+    background:var(--green-deep);color:#fff;border:none;border-radius:7px;
+    box-shadow:0 3px 9px rgba(13,77,53,.3);font-family:'Cormorant Garamond',serif;
+    font-size:13px;font-weight:700;padding:4px 11px
+  }
+  .leaflet-tooltip.lbl-haram:before{display:none}
+
+  /* Results sheet over map */
+  .results-sheet{
+    flex-shrink:0;background:var(--white);border-top:1px solid var(--line);
+    max-height:38vh;overflow-y:auto;-webkit-overflow-scrolling:touch
+  }
+  .rs-head{position:sticky;top:0;background:var(--white);padding:12px 16px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bg-soft)}
+  .rs-head .t{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-mute);font-weight:700}
+  .rs-head .c{color:var(--green-deep);font-weight:700;font-size:12px}
+  .place-row{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bg-soft);align-items:center}
+  .place-row:active{background:var(--bg-soft)}
+  .pr-ic{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .pr-info{flex:1;min-width:0}
+  .pr-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;line-height:1.25}
+  .pr-meta{font-size:12px;color:var(--ink-mute);display:flex;gap:5px;flex-wrap:wrap;align-items:center;line-height:1.4}
+  .pr-meta .open{color:var(--green-light);font-weight:600}
+  .pr-meta .closed{color:var(--red);font-weight:600}
+  .pr-dist{text-align:right;flex-shrink:0}
+  .pr-dist .n{font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--green-light);font-size:16px}
+  .pr-dist .l{font-size:9px;text-transform:uppercase;color:var(--ink-mute)}
+
+  /* ===== PLACE DETAIL ===== */
+  .pd-hero{height:180px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .pd-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(201,164,74,.3),transparent 60%)}
+  .pd-hero .em{font-size:80px;position:relative;filter:drop-shadow(0 4px 12px rgba(0,0,0,.2))}
+  .pd-body{background:#fff;border-radius:22px 22px 0 0;margin-top:-18px;position:relative;padding:22px 18px;flex:1}
+  .pd-name{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--green-deep);line-height:1.1;margin-bottom:6px}
+  .pd-cat{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);color:var(--green-deep);padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;margin-bottom:16px}
+  .pd-stats{display:flex;gap:10px;padding:14px 0;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+  .pd-stat{flex:1;min-width:80px}
+  .pd-stat .l{font-size:10px;text-transform:uppercase;color:var(--ink-mute);font-weight:700;margin-bottom:2px}
+  .pd-stat .v{font-size:14px;font-weight:600}
+  .pd-stat .v.rating{color:var(--gold)}
+  .pd-stat .v.open{color:var(--green-light)}
+  .pd-stat .v.closed{color:var(--red)}
+  .pd-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px}
+  .pd-act{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:13px 6px;text-align:center;font-size:12px;font-weight:600;color:var(--ink)}
+  .pd-act:active{background:var(--green-bg)}
+  .pd-act .ic{display:block;font-size:21px;margin-bottom:4px}
+  .pd-sec{padding:16px 0;border-bottom:1px solid var(--line)}
+  .pd-sec:last-child{border-bottom:none}
+  .pd-sec .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:8px}
+  .pd-sec .txt{color:var(--ink-soft);line-height:1.65;font-size:14px}
+  .pd-feats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .pd-feat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft)}
+  .pd-feat:before{content:"✓";color:var(--green-light);font-weight:700}
+  .pd-mini{height:160px;border-radius:12px;overflow:hidden;margin-top:8px;border:1px solid var(--line);position:relative}
+  #pdMiniMap{position:absolute;inset:0}
+
+  /* ===== GUIDES ===== */
+  .g-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px}
+  .g-card{background:linear-gradient(160deg,var(--green-deep),var(--green-mid));color:#fff;border-radius:16px;padding:20px 16px;position:relative;overflow:hidden}
+  .g-card:active{transform:scale(.98)}
+  .g-card.hajj{background:linear-gradient(160deg,#8a6500,#c9a44a)}
+  .g-card:before{content:"";position:absolute;top:-40px;right:-40px;width:130px;height:130px;background:radial-gradient(circle,rgba(201,164,74,.3),transparent 70%);border-radius:50%}
+  .g-card .eye{font-size:10px;color:var(--gold-light);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:4px;position:relative}
+  .g-card.hajj .eye{color:#fff}
+  .g-card .ti{font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:700;margin-bottom:4px;position:relative}
+  .g-card .de{font-size:12px;opacity:.9;margin-bottom:14px;position:relative}
+  .g-card .pbar{height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;position:relative}
+  .g-card .pfill{height:100%;background:var(--gold-light);border-radius:2px}
+  .g-card .plab{font-size:10px;color:var(--gold-light);margin-top:5px;position:relative}
+  .g-card.hajj .plab{color:#fff}
+  .sec-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:700;margin-bottom:14px}
+  .g-extra{display:grid;gap:10px}
+  .g-ex{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+  .g-ex:active{background:var(--bg-soft)}
+  .g-ex .ic{width:38px;height:38px;background:var(--green-bg);color:var(--green-deep);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .g-ex .info{flex:1}
+  .g-ex .ti{font-weight:700;color:var(--ink);font-size:14px}
+  .g-ex .su{font-size:12px;color:var(--ink-mute);margin-top:2px}
+  .g-ex .ar{color:var(--ink-mute)}
+
+  /* ===== GUIDE STEP ===== */
+  .gs-hero{background:linear-gradient(135deg,var(--green-deep),var(--green-mid));color:#fff;padding:22px 18px;position:relative;overflow:hidden}
+  .gs-hero.hajj{background:linear-gradient(135deg,#8a6500,#c9a44a)}
+  .gs-hero:before{content:"";position:absolute;top:-30px;right:-30px;width:130px;height:130px;background:radial-gradient(circle,rgba(201,164,74,.3),transparent 70%);border-radius:50%}
+  .gs-cnt{font-size:11px;color:var(--gold-light);text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:6px;position:relative}
+  .gs-hero.hajj .gs-cnt{color:#fff}
+  .gs-ti{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.1;margin-bottom:6px;position:relative}
+  .gs-su{font-size:13px;opacity:.9;margin-bottom:16px;position:relative}
+  .gs-pbar{height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;position:relative}
+  .gs-pfill{height:100%;background:var(--gold-light);border-radius:2px;transition:width .4s}
+  .gs-stepper{display:flex;gap:4px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .gs-stepper::-webkit-scrollbar{display:none}
+  .gs-dot{flex:1;min-width:62px;text-align:center;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;color:var(--ink-mute);background:var(--bg-soft);border:1px solid transparent;white-space:nowrap}
+  .gs-dot.done{background:var(--green-bg);color:var(--green-deep);border-color:var(--green-light)}
+  .gs-dot.active{background:var(--green-deep);color:#fff}
+  .gs-body{padding:20px 18px 90px}
+  .gs-intro{background:var(--green-bg);border-left:3px solid var(--green-deep);padding:14px 16px;border-radius:4px;font-size:14px;color:var(--green-deep);line-height:1.6;margin-bottom:22px}
+  .gs-block{margin-bottom:22px}
+  .gs-tag{display:inline-block;background:var(--gold-bg);color:#8a6500;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+  .gs-bti{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--green-deep);margin-bottom:10px;line-height:1.2}
+  .gs-txt{color:var(--ink-soft);line-height:1.7;font-size:14px;white-space:pre-line}
+  .dua{background:linear-gradient(135deg,#fefbf2,#fef6e7);border-left:3px solid var(--gold);padding:18px;border-radius:8px;margin:14px 0}
+  .dua-ar{font-family:'Cormorant Garamond',serif;font-size:23px;color:var(--green-deep);text-align:right;direction:rtl;margin-bottom:13px;line-height:1.5;font-weight:600}
+  .dua-tr{font-size:13px;color:var(--ink);font-style:italic;margin-bottom:8px;font-weight:600}
+  .dua-tl{font-size:13px;color:var(--ink-soft);line-height:1.5;padding-top:8px;border-top:1px solid rgba(201,164,74,.3)}
+  .dua-play{margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--gold);color:#8a6500;padding:6px 12px;border-radius:16px;font-size:12px;font-weight:600}
+  .warn{background:#fff3e0;border-left:3px solid #ff9f43;padding:14px 16px;border-radius:4px;margin:14px 0}
+  .warn .wt{color:#c75500;font-weight:700;font-size:13px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .warn .wc{color:#5a3500;font-size:13px;line-height:1.6;white-space:pre-line}
+  .audio{background:var(--green-bg);padding:14px;border-radius:10px;display:flex;align-items:center;gap:13px;margin:14px 0}
+  .audio .pb{width:44px;height:44px;background:var(--green-deep);color:#fff;border-radius:50%;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .audio .ai{flex:1}
+  .audio .at{font-weight:700;color:var(--green-deep);font-size:14px}
+  .audio .am{color:var(--ink-mute);font-size:12px;margin-top:2px}
+  .gs-nav{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;z-index:10}
+  .gs-prev{background:var(--bg-soft);color:var(--ink-soft);border:1px solid var(--line);padding:14px 18px;border-radius:10px;font-weight:600;font-size:14px}
+  .gs-prev:disabled{opacity:.4}
+  .gs-next{background:var(--green-deep);color:#fff;padding:14px 18px;border-radius:10px;font-weight:700;flex:1;font-size:15px}
+
+  /* ===== FAVORITES ===== */
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-mute)}
+  .empty .ic{font-size:60px;opacity:.4;margin-bottom:16px}
+  .empty .ti{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--green-deep);margin-bottom:8px;font-weight:600}
+  .fav-list{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+
+  /* ===== PROFILE ===== */
+  .pf-head{background:linear-gradient(160deg,var(--green-deep),var(--green-mid));color:#fff;padding:30px 20px 26px;position:relative;overflow:hidden}
+  .pf-head:before{content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(201,164,74,.25),transparent 70%);border-radius:50%}
+  .pf-av{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid var(--gold-light);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--gold-light);margin-bottom:12px;position:relative}
+  .pf-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;position:relative}
+  .pf-email{font-size:13px;opacity:.85;position:relative;margin-top:2px}
+  .pf-pro{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;padding:4px 12px;border-radius:14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:12px;position:relative}
+  .pf-trip{margin:16px 18px 0;background:var(--green-bg);border:1px solid var(--green-light);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center}
+  .pf-trip .ti{font-size:13px;color:var(--ink-soft)}
+  .pf-trip .ti strong{color:var(--green-deep)}
+  .pf-trip .cd{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;color:var(--green-deep);line-height:1}
+  .pf-trip .cl{font-size:10px;text-transform:uppercase;color:var(--ink-mute)}
+  .pf-prog{margin:16px 18px 0}
+  .pf-prog .pt{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:10px}
+  .pf-prog-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:8px}
+  .pf-prog-card .r{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink)}
+  .pf-prog-card .bar{height:6px;background:var(--bg-app);border-radius:3px;overflow:hidden}
+  .pf-prog-card .fill{height:100%;background:var(--green-light);border-radius:3px}
+  .pf-menu{margin:16px 18px 24px}
+  .pf-mi{display:flex;align-items:center;gap:14px;padding:15px 16px;background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+  .pf-mi:active{background:var(--bg-soft)}
+  .pf-mi .ic{width:36px;height:36px;border-radius:9px;background:var(--green-bg);color:var(--green-deep);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .pf-mi .lb{flex:1;font-weight:600;color:var(--ink);font-size:14px}
+  .pf-mi .ar{color:var(--ink-mute);font-size:13px;white-space:nowrap;flex-shrink:0}
+  .pf-mi.danger .ic{background:#fdeaea;color:var(--red)}
+  .pf-mi.danger .lb{color:var(--red)}
+
+  /* ===== TOAST ===== */
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:24px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);z-index:9999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;max-width:90%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+  .toast.success{background:var(--green-deep)}
+  .toast.warning{background:var(--gold)}
+
+  .leaflet-bar a,.leaflet-bar a:hover{width:32px;height:32px;line-height:32px}
+
+  /* ===== DESKTOP / WIDE SCREENS ===== */
+  @media (min-width:760px){
+    .topbar{padding:16px 32px}
+    .tb-logo{font-size:23px}
+    /* Map fills the whole width — that's good for a map */
+    .filters{padding:14px 28px}
+    .cuisines{padding:12px 28px}
+    /* Results sheet beside/over map: make it a wider strip */
+    .results-sheet{max-height:34vh}
+    .rs-head{padding:14px 28px 9px}
+    .place-row{padding:13px 28px}
+    /* Place rows in a responsive grid on wide screens */
+    #rsList,#favContent .fav-list{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+      gap:0
+    }
+    #rsList .place-row,#favContent .place-row{
+      border-bottom:1px solid var(--bg-soft);border-right:1px solid var(--bg-soft)
+    }
+    /* Text-heavy screens: center content for readability */
+    .screen-pad{max-width:880px;margin:0 auto;width:100%;padding:32px 28px 40px}
+    .g-cards{grid-template-columns:1fr 1fr;gap:18px}
+    .g-card{padding:28px 24px}
+    .g-card .ti{font-size:30px}
+    /* Place detail centered */
+    #s-place>div,#s-step>div{max-width:760px;margin:0 auto;width:100%}
+    .pd-hero{height:240px;border-radius:0}
+    .pd-hero .em{font-size:100px}
+    .pd-body{padding:30px 36px}
+    .pd-name{font-size:32px}
+    .pd-actions{max-width:520px}
+    .gs-hero{padding:30px 40px}
+    .gs-body{padding:28px 40px 100px;max-width:780px;margin:0 auto;width:100%}
+    .gs-stepper{padding:14px 40px}
+    .gs-nav{padding:14px 40px}
+    /* Profile centered */
+    .pf-head{padding:40px 40px 32px;text-align:left}
+    .pf-av{width:84px;height:84px;font-size:38px}
+    .pf-name{font-size:28px}
+    .pf-trip,.pf-prog,.pf-menu{max-width:720px;margin-left:auto;margin-right:auto}
+    .pf-trip{margin-top:20px}
+    /* Bottom nav: keep centered, not stretched edge to edge */
+    .bottom-nav{padding:10px 0 12px;justify-content:center;gap:20px}
+    .nav-item .ic{font-size:23px}
+    .nav-item{font-size:12px;max-width:160px;flex:0 1 160px}
+  }
+  @media (min-width:1100px){
+    .pf-head{padding:48px 64px 36px}
+    .screen-pad{padding:40px 32px 48px}
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <div class="topbar" id="topbar">
+    <div class="tb-logo" id="tbLogo">
+      <div class="mark">ﷲ</div>Takia
+    </div>
+    <button class="tb-action" id="tbAction" onclick="go('profile')">А</button>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="screens" id="screens">
+
+    <!-- MAP -->
+    <div class="screen active" id="s-map" data-tab="map">
+      <div class="map-wrap">
+        <div class="filters" id="filters"></div>
+        <div class="cuisines" id="cuisines"></div>
+        <div id="mapBox"><div id="leafletMap"></div></div>
+        <div class="results-sheet">
+          <div class="rs-head">
+            <span class="t">Рядом · по расстоянию</span>
+            <span class="c" id="rsCount">—</span>
+          </div>
+          <div id="rsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLACE DETAIL -->
+    <div class="screen" id="s-place" data-tab="map">
+      <div id="placeContent"></div>
+    </div>
+
+    <!-- GUIDES LIST -->
+    <div class="screen" id="s-guides" data-tab="guides">
+      <div class="screen-pad">
+        <h1 class="serif" style="font-size:30px;color:var(--green-deep);margin-bottom:6px">Руководства</h1>
+        <p style="color:var(--ink-soft);font-size:14px;margin-bottom:24px">Пошаговые инструкции с дуа, переводом и аудио</p>
+        <div class="g-cards">
+          <div class="g-card" onclick="openGuide('umrah',1)">
+            <div class="eye">Малое паломничество</div>
+            <div class="ti">Умра</div>
+            <div class="de">4 этапа · ~3 часа</div>
+            <div class="pbar"><div class="pfill" id="umrahFill" style="width:25%"></div></div>
+            <div class="plab" id="umrahLab">Шаг 1 из 4 пройден</div>
+          </div>
+          <div class="g-card hajj" onclick="openGuide('hajj',1)">
+            <div class="eye">Большое паломничество</div>
+            <div class="ti">Хадж</div>
+            <div class="de">5 дней · полный гид</div>
+            <div class="pbar"><div class="pfill" id="hajjFill" style="width:0%"></div></div>
+            <div class="plab" id="hajjLab">Ещё не начат</div>
+          </div>
+        </div>
+        <div class="sec-label">Дополнительно</div>
+        <div class="g-extra">
+          <div class="g-ex" onclick="toast('Подготовка к поездке — скоро')">
+            <div class="ic">🎒</div><div class="info"><div class="ti">Подготовка к поездке</div><div class="su">Чек-листы, что взять</div></div><div class="ar">→</div>
+          </div>
+          <div class="g-ex" onclick="toast('Зиярат в Медине — скоро')">
+            <div class="ic">🕌</div><div class="info"><div class="ti">Зиярат в Медине</div><div class="su">Исторические места</div></div><div class="ar">→</div>
+          </div>
+          <div class="g-ex" onclick="toast('Дуа на все случаи — скоро')">
+            <div class="ic">📿</div><div class="info"><div class="ti">Сборник дуа</div><div class="su">50+ дуа с переводом</div></div><div class="ar">→</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GUIDE STEP -->
+    <div class="screen" id="s-step" data-tab="guides">
+      <div id="stepContent"></div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div class="screen" id="s-fav" data-tab="fav">
+      <div class="screen-pad">
+        <h1 class="serif" style="font-size:30px;color:var(--green-deep);margin-bottom:6px">⭐ Избранное</h1>
+        <p style="color:var(--ink-soft);font-size:14px;margin-bottom:22px">Сохранённые места для быстрого доступа</p>
+        <div id="favContent"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="s-profile" data-tab="profile">
+      <div id="profileContent"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-item active" data-nav="map" onclick="go('map')">
+      <span class="ic">🗺️</span>Карта
+    </button>
+    <button class="nav-item" data-nav="guides" onclick="go('guides')">
+      <span class="ic">📖</span>Обряды
+    </button>
+    <button class="nav-item" data-nav="fav" onclick="go('fav')">
+      <span class="ic">⭐</span>Избранное
+    </button>
+    <button class="nav-item" data-nav="profile" onclick="go('profile')">
+      <span class="ic">👤</span>Кабинет
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.js"></script>
+<script>
+/* ============ DATA (embedded) ============ */
+// ============================================
+// TAKIA — Database simulation
+// ============================================
+
+// Categories
+const CATEGORIES = {
+  food: { id: 'food', name: 'Еда', icon: '🍽', color: '#e85a4f', bgColor: '#fde2dd' },
+  shop: { id: 'shop', name: 'Магазины', icon: '🛒', color: '#ff9f43', bgColor: '#ffefd9' },
+  pharmacy: { id: 'pharmacy', name: 'Аптеки', icon: '⚕', color: '#5b9bf2', bgColor: '#ddebfc' },
+  money: { id: 'money', name: 'Обмен', icon: '$', color: '#8e74e8', bgColor: '#ece3fa' },
+  prayer: { id: 'prayer', name: 'Намаз', icon: '🕌', color: '#4ecdc4', bgColor: '#dbf5f2' },
+  medical: { id: 'medical', name: 'Медицина', icon: '🏥', color: '#5b9bf2', bgColor: '#ddebfc' },
+  transport: { id: 'transport', name: 'Транспорт', icon: '🚇', color: '#a89888', bgColor: '#ede8e1' }
+};
+
+// Cuisines for filtering food places
+const CUISINES = ['Казахская', 'Узбекская', 'Турецкая', 'Индийская', 'Арабская', 'Пакистанская', 'Фастфуд'];
+
+// Reference points
+const HARAM_MECCA = { lat: 21.4225, lng: 39.8262, name: 'Масджид аль-Харам' };
+const HARAM_MEDINA = { lat: 24.4672, lng: 39.6112, name: 'Масджид ан-Набави' };
+
+// ============================================
+// PLACES — Real data with verified coordinates
+// ============================================
+
+const PLACES = [
+  // ============ MECCA — FOOD ============
+  {
+    id: 'p001',
+    name: 'Al-Baik',
+    nameKz: 'Аль-Байк',
+    category: 'food',
+    cuisine: 'Фастфуд',
+    lat: 21.4231, lng: 39.8275,
+    city: 'Mecca',
+    distanceFromHaram: 130,
+    rating: 4.6, reviews: 412,
+    priceLevel: 1,
+    hours: '06:00 — 02:00',
+    openNow: true,
+    phone: '+966-12-555-0101',
+    description: 'Легендарная саудовская сеть жареной курицы. Самое популярное место среди паломников. Очереди в часы пик.',
+    features: ['Принимают карты', 'Есть семейная секция', 'Закрыто во время намазов'],
+    photos: ['🍗', '🍟'],
+    verified: true
+  },
+  {
+    id: 'p002',
+    name: 'Restoran Almaty',
+    nameKz: 'Алматы ресторан',
+    category: 'food',
+    cuisine: 'Казахская',
+    lat: 21.4218, lng: 39.8290,
+    city: 'Mecca',
+    distanceFromHaram: 290,
+    rating: 4.8, reviews: 87,
+    priceLevel: 2,
+    hours: '11:00 — 23:00',
+    openNow: true,
+    phone: '+966-12-555-0102',
+    description: 'Семейный ресторан казахской кухни. Бешбармак, манты, куырдак, баурсаки. Меню на казахском и русском. Хозяин — выходец из Алматы.',
+    features: ['Меню на казахском', 'Чай в чайниках', 'Семейная секция', 'Принимают наличные тенге'],
+    photos: ['🍖', '🥟'],
+    verified: true
+  },
+  {
+    id: 'p003',
+    name: 'Samarkand Restaurant',
+    nameKz: 'Самарканд ресторан',
+    category: 'food',
+    cuisine: 'Узбекская',
+    lat: 21.4240, lng: 39.8252,
+    city: 'Mecca',
+    distanceFromHaram: 220,
+    rating: 4.7, reviews: 156,
+    priceLevel: 2,
+    hours: '10:00 — 00:00',
+    openNow: true,
+    phone: '+966-12-555-0103',
+    description: 'Узбекский ресторан, который знают паломники из Центральной Азии. Плов, лагман, шашлык, манты. Большие порции, разумные цены.',
+    features: ['Меню на русском', 'Парковка', 'Можно заказать с собой', 'Большие порции'],
+    photos: ['🍚', '🍢'],
+    verified: true
+  },
+  {
+    id: 'p004',
+    name: 'Anatolia Kebab',
+    nameKz: 'Анатолия кебаб',
+    category: 'food',
+    cuisine: 'Турецкая',
+    lat: 21.4209, lng: 39.8245,
+    city: 'Mecca',
+    distanceFromHaram: 350,
+    rating: 4.5, reviews: 203,
+    priceLevel: 2,
+    hours: '11:00 — 02:00',
+    openNow: true,
+    phone: '+966-12-555-0104',
+    description: 'Аутентичная турецкая кухня — донер, кебаб, лахмаджун, пиде. Турецкий чай в стаканчиках. Без острых специй.',
+    features: ['Турецкий чай', 'Без острого', 'Доставка в отель'],
+    photos: ['🌯', '🥙'],
+    verified: true
+  },
+  {
+    id: 'p005',
+    name: 'Hyderabad Biryani House',
+    nameKz: 'Хайдарабад биряни',
+    category: 'food',
+    cuisine: 'Индийская',
+    lat: 21.4250, lng: 39.8281,
+    city: 'Mecca',
+    distanceFromHaram: 410,
+    rating: 4.6, reviews: 298,
+    priceLevel: 1,
+    hours: '12:00 — 01:00',
+    openNow: true,
+    phone: '+966-12-555-0105',
+    description: 'Знаменитая хайдарабадская бирьяни. Очень популярно у паломников из Индии и Пакистана. Есть мягкие версии без специй.',
+    features: ['Можно без специй', 'Большие порции', 'Только наличные'],
+    photos: ['🍛'],
+    verified: true
+  },
+  {
+    id: 'p006',
+    name: 'Karachi Darbar',
+    nameKz: 'Карачи Дарбар',
+    category: 'food',
+    cuisine: 'Пакистанская',
+    lat: 21.4198, lng: 39.8298,
+    city: 'Mecca',
+    distanceFromHaram: 480,
+    rating: 4.5, reviews: 167,
+    priceLevel: 1,
+    hours: '12:00 — 23:30',
+    openNow: false,
+    phone: '+966-12-555-0106',
+    description: 'Простая пакистанская столовая для паломников. Карри, нихари, ниан, чай-карак. Шумно, но вкусно и дёшево.',
+    features: ['Дёшево', 'Большой выбор', 'Можно заказать с собой'],
+    photos: ['🍛', '🫓'],
+    verified: true
+  },
+
+  // ============ MECCA — PHARMACY ============
+  {
+    id: 'p010',
+    name: 'Al-Shifa Pharmacy',
+    nameKz: 'Аль-Шифа аптека',
+    category: 'pharmacy',
+    lat: 21.4233, lng: 39.8270,
+    city: 'Mecca',
+    distanceFromHaram: 180,
+    rating: 4.8, reviews: 89,
+    hours: '24/7',
+    openNow: true,
+    phone: '+966-12-555-0201',
+    description: 'Круглосуточная аптека рядом с Харамом. Фармацевт говорит по-русски и по-английски. Есть базовые казахстанские лекарства.',
+    features: ['Открыто 24/7', 'Говорят по-русски', 'Доставка в отель', 'Есть казахстанские аналоги'],
+    photos: ['💊'],
+    verified: true
+  },
+  {
+    id: 'p011',
+    name: 'Nahdi Pharmacy',
+    nameKz: 'Нахди аптека',
+    category: 'pharmacy',
+    lat: 21.4215, lng: 39.8285,
+    city: 'Mecca',
+    distanceFromHaram: 310,
+    rating: 4.6, reviews: 156,
+    hours: '06:00 — 02:00',
+    openNow: true,
+    phone: '+966-12-555-0202',
+    description: 'Крупная сеть саудовских аптек. Широкий выбор, есть медицинские товары и косметика. Принимают международные карты.',
+    features: ['Большой выбор', 'Принимают карты', 'Есть медтехника'],
+    photos: ['💊'],
+    verified: true
+  },
+  {
+    id: 'p012',
+    name: 'Al-Dawaa Pharmacy',
+    nameKz: 'Аль-Дауа аптека',
+    category: 'pharmacy',
+    lat: 21.4245, lng: 39.8240,
+    city: 'Mecca',
+    distanceFromHaram: 340,
+    rating: 4.4, reviews: 78,
+    hours: '08:00 — 00:00',
+    openNow: true,
+    phone: '+966-12-555-0203',
+    description: 'Аптека среднего размера, есть товары для паломников: пластыри, обезболивающие, средства от обезвоживания.',
+    features: ['Товары для паломников', 'Принимают карты'],
+    photos: ['💊'],
+    verified: true
+  },
+
+  // ============ MECCA — MONEY EXCHANGE ============
+  {
+    id: 'p020',
+    name: 'Al-Rajhi Bank Exchange',
+    nameKz: 'Аль-Раджи обменник',
+    category: 'money',
+    lat: 21.4228, lng: 39.8268,
+    city: 'Mecca',
+    distanceFromHaram: 200,
+    rating: 4.9, reviews: 234,
+    hours: '09:00 — 21:00',
+    openNow: true,
+    phone: '+966-12-555-0301',
+    description: 'Самый лучший курс обмена в районе Харама. Меняют USD, EUR, KZT, RUB на SAR. Никаких скрытых комиссий.',
+    features: ['Лучший курс', 'Меняют тенге', 'Без комиссий', 'Чек на руки'],
+    photos: ['💵'],
+    verified: true
+  },
+  {
+    id: 'p021',
+    name: 'Al-Ansari Exchange',
+    nameKz: 'Аль-Ансари обменник',
+    category: 'money',
+    lat: 21.4255, lng: 39.8280,
+    city: 'Mecca',
+    distanceFromHaram: 380,
+    rating: 4.7, reviews: 178,
+    hours: '08:30 — 22:00',
+    openNow: true,
+    phone: '+966-12-555-0302',
+    description: 'Сеть обменников по всей Саудии. Хороший курс, быстрое обслуживание. Есть и денежные переводы за границу.',
+    features: ['Денежные переводы', 'Меняют все валюты', 'Быстро'],
+    photos: ['💵'],
+    verified: true
+  },
+  {
+    id: 'p022',
+    name: 'Enjaz Exchange',
+    nameKz: 'Энджаз обменник',
+    category: 'money',
+    lat: 21.4205, lng: 39.8255,
+    city: 'Mecca',
+    distanceFromHaram: 360,
+    rating: 4.5, reviews: 92,
+    hours: '09:00 — 23:00',
+    openNow: true,
+    phone: '+966-12-555-0303',
+    description: 'Популярен среди паломников из Азии. Делают денежные переводы в Казахстан и страны СНГ через Western Union.',
+    features: ['Western Union', 'Денежные переводы в СНГ', 'Меняют тенге'],
+    photos: ['💵'],
+    verified: true
+  },
+
+  // ============ MECCA — SHOPS ============
+  {
+    id: 'p030',
+    name: 'Ihram Store Al-Aziziyah',
+    nameKz: 'Ихрам магазин',
+    category: 'shop',
+    lat: 21.4258, lng: 39.8245,
+    city: 'Mecca',
+    distanceFromHaram: 420,
+    rating: 4.7, reviews: 145,
+    hours: '08:00 — 23:00',
+    openNow: true,
+    phone: '+966-12-555-0401',
+    description: 'Магазин одежды ихрам и принадлежностей для паломничества. Большой выбор размеров. Можно купить заранее или на месте.',
+    features: ['Большой выбор', 'Все размеры', 'Принимают карты'],
+    photos: ['👕'],
+    verified: true
+  },
+  {
+    id: 'p031',
+    name: 'Hyper Panda Mecca',
+    nameKz: 'Гипер Панда',
+    category: 'shop',
+    lat: 21.4290, lng: 39.8310,
+    city: 'Mecca',
+    distanceFromHaram: 720,
+    rating: 4.4, reviews: 567,
+    hours: '07:00 — 00:00',
+    openNow: true,
+    phone: '+966-12-555-0402',
+    description: 'Большой гипермаркет. Продукты, вода, бытовые товары, сувениры. Лучшие цены в городе. Есть отдел для паломников.',
+    features: ['Огромный выбор', 'Низкие цены', 'Есть парковка'],
+    photos: ['🛒'],
+    verified: true
+  },
+  {
+    id: 'p032',
+    name: 'Souvenirs Al-Haram',
+    nameKz: 'Сувениры Аль-Харам',
+    category: 'shop',
+    lat: 21.4220, lng: 39.8260,
+    city: 'Mecca',
+    distanceFromHaram: 90,
+    rating: 4.2, reviews: 89,
+    hours: '06:00 — 02:00',
+    openNow: true,
+    phone: '+966-12-555-0403',
+    description: 'Сувенирные лавки в шаговой доступности от Харама. Финики, замзам, чётки, ковры для намаза, скатерти ихрам. Можно торговаться.',
+    features: ['Можно торговаться', 'Финики', 'Замзам', 'Сувениры'],
+    photos: ['🎁'],
+    verified: true
+  },
+
+  // ============ MECCA — PRAYER ============
+  {
+    id: 'p040',
+    name: 'Mosque Al-Rajhi',
+    nameKz: 'Мечеть Аль-Раджи',
+    category: 'prayer',
+    lat: 21.4270, lng: 39.8300,
+    city: 'Mecca',
+    distanceFromHaram: 600,
+    rating: 4.9, reviews: 234,
+    hours: 'Круглосуточно',
+    openNow: true,
+    description: 'Альтернативная мечеть для намазов, когда Харам переполнен. Чисто, есть омовение, женская секция.',
+    features: ['Менее переполнено', 'Чисто', 'Женская секция', 'Парковка'],
+    photos: ['🕌'],
+    verified: true
+  },
+  {
+    id: 'p041',
+    name: 'Wudu Area Gate 79',
+    nameKz: 'Место омовения, Ворота 79',
+    category: 'prayer',
+    lat: 21.4234, lng: 39.8254,
+    city: 'Mecca',
+    distanceFromHaram: 40,
+    rating: 4.6, reviews: 567,
+    hours: 'Круглосуточно',
+    openNow: true,
+    description: 'Лучшее место для омовения у Харама. Меньше очередей чем у других ворот. Есть мужская и женская части.',
+    features: ['Меньше очередей', 'Чисто', 'Раздельные секции'],
+    photos: ['💧'],
+    verified: true
+  },
+
+  // ============ MECCA — MEDICAL ============
+  {
+    id: 'p050',
+    name: 'King Abdulaziz Hospital',
+    nameKz: 'Госпиталь Короля Абдулазиза',
+    category: 'medical',
+    lat: 21.4180, lng: 39.8300,
+    city: 'Mecca',
+    distanceFromHaram: 850,
+    rating: 4.7, reviews: 178,
+    hours: '24/7',
+    openNow: true,
+    phone: '+966-12-555-0501',
+    description: 'Главная больница для паломников. Скорая, терапевт, кардиолог. Есть переводчики с английского и арабского. Государственная медицина бесплатна для паломников.',
+    features: ['Скорая 24/7', 'Переводчики', 'Бесплатно для паломников', 'Все специальности'],
+    photos: ['🏥'],
+    verified: true
+  },
+  {
+    id: 'p051',
+    name: 'Hera Polyclinic',
+    nameKz: 'Поликлиника Хира',
+    category: 'medical',
+    lat: 21.4260, lng: 39.8230,
+    city: 'Mecca',
+    distanceFromHaram: 540,
+    rating: 4.4, reviews: 67,
+    hours: '08:00 — 23:00',
+    openNow: true,
+    phone: '+966-12-555-0502',
+    description: 'Поликлиника с приёмом терапевта и медсестры. Помощь при солнечном ударе, обезвоживании, мелких травмах.',
+    features: ['Без очереди', 'Английский', 'Принимают карты'],
+    photos: ['🏥'],
+    verified: true
+  },
+
+  // ============ MECCA — TRANSPORT ============
+  {
+    id: 'p060',
+    name: 'Haramain Station Mecca',
+    nameKz: 'Вокзал Харамайн (Мекка)',
+    category: 'transport',
+    lat: 21.4170, lng: 39.8800,
+    city: 'Mecca',
+    distanceFromHaram: 6500,
+    rating: 4.8, reviews: 1245,
+    hours: '05:00 — 23:00',
+    openNow: true,
+    description: 'Высокоскоростной поезд Мекка — Джидда — Медина. Билеты от $40 до Джидды, $80 до Медины. Лучший способ передвижения между священными городами.',
+    features: ['ВКЛ', 'Электронные билеты', 'Багаж включён', 'Прохождение паспорта'],
+    photos: ['🚄'],
+    verified: true
+  },
+
+  // ============ MEDINA — FOOD ============
+  {
+    id: 'p100',
+    name: 'Almaty Cafe Medina',
+    nameKz: 'Алматы кафе (Медина)',
+    category: 'food',
+    cuisine: 'Казахская',
+    lat: 24.4680, lng: 39.6120,
+    city: 'Medina',
+    distanceFromHaram: 290,
+    rating: 4.7, reviews: 56,
+    priceLevel: 2,
+    hours: '11:00 — 23:00',
+    openNow: true,
+    phone: '+966-14-555-0101',
+    description: 'Казахская кухня в Медине. Бешбармак, манты, плов, чак-чак. Хозяева встречают казахоязычных паломников как родных.',
+    features: ['Казахская кухня', 'Чай в чайниках', 'Принимают тенге'],
+    photos: ['🍖'],
+    verified: true
+  },
+  {
+    id: 'p101',
+    name: 'Restaurant Bukhara',
+    nameKz: 'Ресторан Бухара',
+    category: 'food',
+    cuisine: 'Узбекская',
+    lat: 24.4665, lng: 39.6098,
+    city: 'Medina',
+    distanceFromHaram: 240,
+    rating: 4.8, reviews: 134,
+    priceLevel: 2,
+    hours: '10:00 — 00:00',
+    openNow: true,
+    phone: '+966-14-555-0102',
+    description: 'Известный среди русскоязычных паломников ресторан. Узбекский плов, шашлык, лагман, манты. Большие порции.',
+    features: ['Большие порции', 'Меню на русском', 'Семейная секция'],
+    photos: ['🍚'],
+    verified: true
+  },
+  {
+    id: 'p102',
+    name: 'Istanbul Restaurant Medina',
+    nameKz: 'Стамбул ресторан (Медина)',
+    category: 'food',
+    cuisine: 'Турецкая',
+    lat: 24.4685, lng: 39.6090,
+    city: 'Medina',
+    distanceFromHaram: 310,
+    rating: 4.6, reviews: 198,
+    priceLevel: 2,
+    hours: '11:00 — 02:00',
+    openNow: true,
+    phone: '+966-14-555-0103',
+    description: 'Турецкая кухня в Медине. Кебабы, лахмаджун, пиде, баклава. Стильный интерьер, доступные цены.',
+    features: ['Турецкий чай', 'Десерты', 'Доставка в отель'],
+    photos: ['🌯'],
+    verified: true
+  },
+
+  // ============ MEDINA — OTHER ============
+  {
+    id: 'p110',
+    name: 'Al-Shifa Pharmacy Medina',
+    nameKz: 'Аль-Шифа аптека (Медина)',
+    category: 'pharmacy',
+    lat: 24.4675, lng: 39.6105,
+    city: 'Medina',
+    distanceFromHaram: 220,
+    rating: 4.7, reviews: 78,
+    hours: '24/7',
+    openNow: true,
+    phone: '+966-14-555-0201',
+    description: 'Круглосуточная аптека рядом с Масджид ан-Набави. Базовые лекарства, фармацевт говорит по-английски.',
+    features: ['Открыто 24/7', 'Английский', 'Доставка в отель'],
+    photos: ['💊'],
+    verified: true
+  },
+  {
+    id: 'p111',
+    name: 'Al-Rajhi Bank Medina',
+    nameKz: 'Аль-Раджи обменник (Медина)',
+    category: 'money',
+    lat: 24.4670, lng: 39.6115,
+    city: 'Medina',
+    distanceFromHaram: 180,
+    rating: 4.8, reviews: 145,
+    hours: '09:00 — 21:00',
+    openNow: true,
+    phone: '+966-14-555-0301',
+    description: 'Лучший курс обмена в Медине. Тот же стандарт качества, что и в Мекке.',
+    features: ['Лучший курс', 'Все валюты', 'Без комиссий'],
+    photos: ['💵'],
+    verified: true
+  },
+  {
+    id: 'p112',
+    name: 'Hyper Panda Medina',
+    nameKz: 'Гипер Панда (Медина)',
+    category: 'shop',
+    lat: 24.4710, lng: 39.6140,
+    city: 'Medina',
+    distanceFromHaram: 620,
+    rating: 4.5, reviews: 387,
+    hours: '07:00 — 00:00',
+    openNow: true,
+    description: 'Гипермаркет рядом с центром Медины. Продукты, бытовые товары, сувениры, финики.',
+    features: ['Большой выбор', 'Низкие цены', 'Есть финики Медины'],
+    photos: ['🛒'],
+    verified: true
+  },
+  {
+    id: 'p113',
+    name: 'Quba Mosque',
+    nameKz: 'Мечеть Куба',
+    category: 'prayer',
+    lat: 24.4395, lng: 39.6171,
+    city: 'Medina',
+    distanceFromHaram: 3500,
+    rating: 4.9, reviews: 678,
+    hours: 'Круглосуточно',
+    openNow: true,
+    description: 'Первая мечеть в истории ислама. Молитва здесь равна совершению Умры (хадис). Обязательное место зиярата в Медине.',
+    features: ['Историческое место', 'Молитва = Умра', 'Большая парковка'],
+    photos: ['🕌'],
+    verified: true
+  },
+  {
+    id: 'p114',
+    name: 'Haramain Station Medina',
+    nameKz: 'Вокзал Харамайн (Медина)',
+    category: 'transport',
+    lat: 24.4910, lng: 39.5530,
+    city: 'Medina',
+    distanceFromHaram: 6200,
+    rating: 4.7, reviews: 567,
+    hours: '05:00 — 23:00',
+    openNow: true,
+    description: 'Высокоскоростной поезд из Медины в Мекку и Джидду. 2 часа до Мекки.',
+    features: ['ВКЛ', 'Электронные билеты', 'Багаж включён'],
+    photos: ['🚄'],
+    verified: true
+  }
+];
+
+// ============================================
+// GUIDES — Step-by-step rituals
+// ============================================
+
+const GUIDES = {
+  umrah: {
+    id: 'umrah',
+    title: 'Умра',
+    titleEn: 'Umrah',
+    description: 'Малое паломничество — 4 этапа',
+    duration: '3-4 часа',
+    steps: [
+      {
+        id: 1,
+        title: 'Ихрам',
+        subtitle: 'Вход в священное состояние',
+        duration: '30 мин',
+        free: true,
+        intro: 'Ихрам — это первый и обязательный этап паломничества. Перед пересечением границы Микат необходимо войти в состояние ихрама — особого ритуального состояния.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Подготовка',
+            content: '1. Совершите полное омовение (гусль)\n2. Подстригите ногти, удалите волосы под мышками и в интимных местах\n3. Мужчины: наденьте 2 куска белой нешитой ткани (изар и рида)\n4. Женщины: обычная скромная одежда, лицо и кисти открыты'
+          },
+          {
+            type: 'dua',
+            title: 'Намерение (нийя)',
+            arabic: 'لَبَّيْكَ اللَّهُمَّ عُمْرَةً',
+            translit: 'Лаббайка-Ллахумма умратан',
+            translation: 'Я здесь перед Тобой, о Аллах, ради совершения Умры'
+          },
+          {
+            type: 'instruction',
+            title: 'Тальбия',
+            content: 'После намерения непрерывно произносите тальбию до момента таваф:'
+          },
+          {
+            type: 'dua',
+            title: 'Тальбия',
+            arabic: 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ، إِنَّ الْحَمْدَ وَالنِّعْمَةَ لَكَ وَالْمُلْكَ، لَا شَرِيكَ لَكَ',
+            translit: 'Лаббайка-Ллахумма лаббайк, лаббайка ла шарика лака лаббайк, инна-ль-хамда ва-н-ниʿмата лака ва-ль-мульк, ла шарика лак',
+            translation: 'Вот я перед Тобой, о Аллах, вот я перед Тобой! Вот я перед Тобой, нет у Тебя сотоварища, вот я перед Тобой! Поистине, Тебе хвала, Тебе блага и Тебе власть. Нет у Тебя сотоварища!'
+          },
+          {
+            type: 'warning',
+            title: 'Что запрещено в ихраме',
+            content: '• Стричь волосы, ногти\n• Использовать парфюм\n• Охотиться, ломать растения\n• Интимные отношения\n• Мужчинам — носить шитую одежду\n• Закрывать голову (мужчинам) или лицо (женщинам)'
+          },
+          {
+            type: 'audio',
+            title: 'Аудио-сопровождение этапа',
+            speaker: 'Шейх Абдурахман',
+            duration: '6:42',
+            url: '#audio-step1'
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: 'Таваф',
+        subtitle: '7 обходов вокруг Каабы',
+        duration: '45-90 мин',
+        free: false,
+        intro: 'Таваф — это семикратный обход вокруг Каабы против часовой стрелки. Начинается и заканчивается у Хаджар аль-Асвад (Чёрного Камня).',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Подготовка к тавафу',
+            content: '1. Войдите в Масджид аль-Харам через любые ворота, произнося дуа\n2. Идите к Каабе, в стороне Хаджар аль-Асвад\n3. Мужчины: накиньте правую часть ихрама на левое плечо (идтиба)\n4. Убедитесь, что омовение действительно'
+          },
+          {
+            type: 'dua',
+            title: 'Дуа при начале тавафа',
+            arabic: 'بِسْمِ اللَّهِ، اللَّهُ أَكْبَرُ',
+            translit: 'Бисми-Ллахи, Аллаху акбар',
+            translation: 'Во имя Аллаха, Аллах велик!'
+          },
+          {
+            type: 'instruction',
+            title: 'Как совершать обход',
+            content: '1. Встаньте напротив Хаджар аль-Асвад (Чёрного Камня)\n2. Поднимите правую руку в его сторону, произнесите дуа\n3. Начните первый круг, идя против часовой стрелки\n4. Мужчины: первые 3 круга идите быстрым шагом (рамаль), последние 4 — обычным\n5. Каабу должна быть слева от вас\n6. На каждом круге у Йеменского Угла читайте дуа\n7. Завершив 7 кругов, идите к Макам Ибрахим'
+          },
+          {
+            type: 'dua',
+            title: 'Дуа между Йеменским углом и Чёрным Камнем',
+            arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+            translit: 'Раббана атина фи-д-дунья хасанатан ва фи-ль-ахирати хасанатан ва кина азаба-н-нар',
+            translation: 'Господь наш! Даруй нам в этом мире благо и в Жизни Последней благо, и убереги нас от мук Огня'
+          },
+          {
+            type: 'instruction',
+            title: 'После 7 кругов',
+            content: '1. Совершите 2 ракаата намаза у Макам Ибрахим (или в любом месте мечети, если толпа)\n2. В первом ракаате читайте суру "аль-Кафирун" после "аль-Фатихи"\n3. Во втором ракаате — суру "аль-Ихлас"\n4. Сделайте дуа\n5. Выпейте воду Замзам, обращаясь лицом к Каабе'
+          },
+          {
+            type: 'warning',
+            title: 'Если ошиблись в счёте кругов',
+            content: 'Если потеряли счёт и не помните, 6 это круг или 7 — берите меньшее число и продолжайте. Если знаете, что больше 7 — продолжайте до 8, потом 9. Один лишний круг не нарушает таваф, но прерывать на середине нельзя.'
+          },
+          {
+            type: 'audio',
+            title: 'Аудио-сопровождение тавафа',
+            speaker: 'Шейх Абдурахман',
+            duration: '14:32',
+            url: '#audio-step2'
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: 'Саи',
+        subtitle: '7 переходов между Сафа и Марва',
+        duration: '30-60 мин',
+        free: false,
+        intro: 'Саи — это семикратный переход между холмами ас-Сафа и аль-Марва. Совершается в память о Хаджар, матери Исмаила, искавшей воду для сына.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Начало саи',
+            content: '1. После Замзама выйдите к холму ас-Сафа\n2. Поднимитесь на ас-Сафа, обратитесь лицом к Каабе\n3. Поднимите руки в дуа\n4. Произнесите тахлиль и такбир: "Ля иляха илля Ллах, Ллаху акбар"\n5. Сделайте личные дуа на родном языке'
+          },
+          {
+            type: 'dua',
+            title: 'Дуа на холмах Сафа и Марва',
+            arabic: 'إِنَّ الصَّفَا وَالْمَرْوَةَ مِنْ شَعَائِرِ اللَّهِ',
+            translit: 'Инна-с-сафа ва-ль-марвата мин шаа́ири-Ллах',
+            translation: 'Поистине, ас-Сафа и аль-Марва — из числа знамений Аллаха'
+          },
+          {
+            type: 'instruction',
+            title: 'Семь переходов',
+            content: '1. Идите от ас-Сафа к аль-Марва обычным шагом\n2. Между зелёными колоннами мужчинам — пробежать (раммаль), женщинам — обычно\n3. На аль-Марва — тот же ритуал: повернуться к Каабе, дуа\n4. Это 1 переход. Всего 7\n5. Каждый переход — это путь в одну сторону\n6. Завершение на аль-Марва'
+          },
+          {
+            type: 'audio',
+            title: 'Аудио-сопровождение саи',
+            speaker: 'Шейх Абдурахман',
+            duration: '11:18',
+            url: '#audio-step3'
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: 'Тахаллюль',
+        subtitle: 'Выход из ихрама',
+        duration: '15 мин',
+        free: false,
+        intro: 'Тахаллюль — это выход из состояния ихрама путём бритья или подстрижения волос. После этого Умра считается завершённой, и все запреты ихрама снимаются.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Для мужчин',
+            content: 'Предпочтительно: побрить голову полностью (халк). Это более достойно по сунне.\n\nИначе: подстричь волосы со всей головы, а не с одной стороны.\n\nГде: рядом с холмом аль-Марва есть парикмахерские. Стоимость — 10-20 SAR.'
+          },
+          {
+            type: 'instruction',
+            title: 'Для женщин',
+            content: 'Подстричь часть волос длиной в один сустав пальца. Брить голову женщинам запрещено.\n\nЖенщины могут самостоятельно подрезать волосы — нет необходимости идти в парикмахерскую.'
+          },
+          {
+            type: 'dua',
+            title: 'Дуа при бритье',
+            arabic: 'اللَّهُمَّ اجْعَلْ لِكُلِّ شَعَرَةٍ نُورًا',
+            translit: 'Аллахумма-джʿаль ли-кулли шаʿаратин нура',
+            translation: 'О Аллах, сделай каждый волос светом для меня'
+          },
+          {
+            type: 'instruction',
+            title: 'После тахаллюля',
+            content: '✓ Все запреты ихрама снимаются\n✓ Можно снять одежду ихрама и надеть обычную\n✓ Умра завершена\n\nПоздравляем! Совершите дополнительные намазы благодарности, выпейте Замзам, отдохните.'
+          },
+          {
+            type: 'audio',
+            title: 'Завершающая дуа',
+            speaker: 'Шейх Абдурахман',
+            duration: '4:18',
+            url: '#audio-step4'
+          }
+        ]
+      }
+    ]
+  },
+
+  hajj: {
+    id: 'hajj',
+    title: 'Хадж',
+    titleEn: 'Hajj',
+    description: 'Большое паломничество — 5 дней',
+    duration: '5-6 дней',
+    steps: [
+      {
+        id: 1,
+        title: 'День 1 — Йаум ат-Тарвия',
+        subtitle: '8 Зу-ль-Хиджа · Мина',
+        duration: '24 часа',
+        free: true,
+        intro: 'Первый день Хаджа. Паломники входят в ихрам и направляются в Мину, где проводят день и ночь, совершая 5 намазов.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Утром 8 Зу-ль-Хиджа',
+            content: '1. Совершите полное омовение (гусль)\n2. Войдите в ихрам со словами намерения на Хадж\n3. Произносите тальбию\n4. Отправляйтесь в Мину после восхода солнца'
+          },
+          {
+            type: 'dua',
+            title: 'Намерение на Хадж',
+            arabic: 'لَبَّيْكَ اللَّهُمَّ حَجًّا',
+            translit: 'Лаббайка-Ллахумма хаджан',
+            translation: 'Я здесь перед Тобой, о Аллах, ради совершения Хаджа'
+          },
+          {
+            type: 'instruction',
+            title: 'В Мине',
+            content: '1. По прибытии в Мину разместитесь в палаточном городке\n2. Совершите намазы Зухр, Аср, Магриб, Иша в Мине\n3. Сокращайте обязательные намазы из 4 ракаатов до 2 (каср)\n4. Не объединяйте намазы (только сокращайте)\n5. Намаз Фаджр следующего дня также в Мине\n6. Постоянно произносите тальбию'
+          },
+          {
+            type: 'warning',
+            title: 'Важно',
+            content: 'Возьмите с собой: воду (минимум 5 литров на человека), еду на день, лекарства, солнцезащиту. Палаточный городок очень переполнен. Запомните номер своей палатки.'
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: 'День 2 — Йаум Арафат',
+        subtitle: '9 Зу-ль-Хиджа · Арафат',
+        duration: '24 часа',
+        free: false,
+        intro: 'Самый важный день Хаджа. "Хадж — это Арафат" (хадис). Если паломник не был на Арафате в этот день, его Хадж не действителен.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Утром 9 Зу-ль-Хиджа',
+            content: '1. После Фаджр-намаза в Мине отправляйтесь в Арафат\n2. По дороге продолжайте тальбию\n3. Прибудьте на Арафат до полудня\n4. Войдите в границы Арафата (обозначены знаками)'
+          },
+          {
+            type: 'instruction',
+            title: 'На Арафате (важнейшая часть Хаджа!)',
+            content: '1. Совершите Зухр и Аср вместе с сокращением (2+2 ракаата) в палатке имама\n2. После намазов — стояние (вукуф) на Арафате\n3. Время до заката — это самое важное время Хаджа\n4. Постоянно произносите дуа, истигфар, тальбию\n5. Просите Аллаха обо всём, что вам нужно — этот день особенный для принятия дуа\n6. На Арафате нет конкретных мест-святынь — стояние и дуа важнее всего'
+          },
+          {
+            type: 'dua',
+            title: 'Лучшая дуа на Арафате',
+            arabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ',
+            translit: 'Ля иляха илля-Ллах, вахдаху ля шарика ляху, ляху-ль-мульк ва ляху-ль-хамд, ва хува аля кулли шайʼин кадир',
+            translation: 'Нет божества, кроме одного Аллаха, нет у Него сотоварища. Ему принадлежит власть, Ему хвала, и Он способен на всё'
+          },
+          {
+            type: 'instruction',
+            title: 'После заката',
+            content: '1. НЕ совершайте Магриб-намаз на Арафате\n2. Сразу после заката отправляйтесь в Муздалифу\n3. Сохраняйте спокойствие и поминание Аллаха\n4. В Муздалифе совершите Магриб и Иша вместе (3+2 ракаата)'
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: 'День 3 — Йаум ан-Нахр',
+        subtitle: '10 Зу-ль-Хиджа · Муздалифа → Мина',
+        duration: '24 часа',
+        free: false,
+        intro: 'День жертвоприношения. Самый насыщенный день Хаджа — побивание камнями, жертвоприношение, бритьё, таваф ифада.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Ночью в Муздалифе',
+            content: '1. Соберите 49-70 мелких камней размером с горошину\n2. Совершите Магриб и Иша вместе\n3. Переночуйте в Муздалифе (под открытым небом)\n4. После Фаджр — дуа, поминание\n5. До восхода солнца — выдвигайтесь в Мину'
+          },
+          {
+            type: 'instruction',
+            title: 'В Мине, утром 10 числа',
+            content: '1. Бросьте 7 камней в большой Джамарат (Джамрат аль-Акаба)\n2. Произносите такбир при каждом броске: "Аллаху акбар"\n3. После — совершите жертвоприношение (или платите за курбани через Adahi)\n4. После жертвоприношения — побрейте голову (мужчинам) или подстригите волосы (женщинам)\n5. Снимите ихрам — теперь все запреты снимаются, кроме интимных отношений'
+          },
+          {
+            type: 'dua',
+            title: 'Такбир при побивании камнями',
+            arabic: 'بِسْمِ اللَّهِ، اللَّهُ أَكْبَرُ، رَغْمًا لِلشَّيْطَانِ وَرِضًا لِلرَّحْمَنِ',
+            translit: 'Бисми-Ллахи, Аллаху акбар, рагман ли-ш-шайтан ва ридан ли-р-Рахман',
+            translation: 'Во имя Аллаха, Аллах велик! Униженно для Шайтана и угодно Милостивому'
+          },
+          {
+            type: 'instruction',
+            title: 'Возвращение в Мекку — Таваф Ифада',
+            content: '1. Отправляйтесь в Мекку\n2. Совершите Таваф Ифада (7 кругов вокруг Каабы) — обязательная часть Хаджа\n3. Совершите Саи между Сафа и Марва\n4. После этого ВСЕ запреты ихрама снимаются, включая интимные отношения\n5. Вернитесь в Мину к ночи'
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: 'Дни 4-5 — Аййам ат-Ташрик',
+        subtitle: '11-12 Зу-ль-Хиджа · Мина',
+        duration: '48 часов',
+        free: false,
+        intro: 'Дни Ташрик. Паломники находятся в Мине, побивают все три Джамарата каждый день. Можно уйти после 12-го числа (нафар авваль) или остаться до 13-го (нафар сани).',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'Каждый день (11 и 12 числа)',
+            content: '1. После полудня (Зухр) идите к трём Джамаратам\n2. Бросьте по 7 камней в каждый Джамарат в следующем порядке:\n   • Малый Джамарат (ас-Сугра)\n   • Средний Джамарат (аль-Вуста)\n   • Большой Джамарат (аль-Кубра / аль-Акаба)\n3. После каждого броска делайте дуа (кроме большого)\n4. Всего 21 камень в день × 2 дня = 42 камня\n5. Ночуйте в Мине'
+          },
+          {
+            type: 'instruction',
+            title: 'Завершение Хаджа',
+            content: '1. После 12-го числа можете покинуть Мину до заката (нафар авваль)\n2. Или остаться до 13-го числа (нафар сани) — это лучше\n3. Перед отъездом из Мекки совершите ПРОЩАЛЬНЫЙ Таваф (Таваф аль-Вадаа)\n4. Это 7 кругов вокруг Каабы без саи\n5. После прощального тавафа — Хадж завершён'
+          },
+          {
+            type: 'dua',
+            title: 'Дуа после Хаджа',
+            arabic: 'اللَّهُمَّ تَقَبَّلْ مِنَّا',
+            translit: 'Аллахумма такаббаль минна',
+            translation: 'О Аллах, прими от нас'
+          }
+        ]
+      },
+      {
+        id: 5,
+        title: 'Зиярат в Медине',
+        subtitle: 'Опционально, но рекомендовано',
+        duration: '3-7 дней',
+        free: false,
+        intro: 'Хотя посещение Медины не является обязательной частью Хаджа, оно глубоко рекомендовано. Молитва в Масджид ан-Набави равна 1000 молитвам в обычной мечети.',
+        sections: [
+          {
+            type: 'instruction',
+            title: 'По прибытии в Медину',
+            content: '1. Совершите 2 ракаата приветственной молитвы в Масджид ан-Набави\n2. Если возможно — попробуйте помолиться в "Раудат аль-Джанна" (Сад Рая) — между минбаром и могилой Пророка ﷺ\n3. Прочитайте салаваты у могилы Пророка ﷺ'
+          },
+          {
+            type: 'dua',
+            title: 'Салават Пророку ﷺ',
+            arabic: 'السَّلَامُ عَلَيْكَ يَا رَسُولَ اللَّهِ',
+            translit: 'Ас-саляму алейка йа Расулю-Ллах',
+            translation: 'Мир тебе, о Посланник Аллаха'
+          },
+          {
+            type: 'instruction',
+            title: 'Места для зиярата',
+            content: '• Масджид Куба — первая мечеть в исламе. Молитва там = Умре\n• Кладбище аль-Бакъи — где похоронены сподвижники\n• Гора Ухуд — место исторической битвы, могилы шахидов\n• Масджид аль-Кибалтайн — мечеть двух кибл\n• Бир Усман — колодец Османа'
+          }
+        ]
+      }
+    ]
+  }
+};
+
+// ============================================
+// CURRENT USER (simulated)
+// ============================================
+
+const CURRENT_USER = {
+  id: 'u001',
+  name: 'Айгуль',
+  email: 'aigul@example.com',
+  language: 'ru',
+  premiumUntil: '2026-12-31',
+  trip: {
+    type: 'umrah',
+    plannedDate: '2026-06-15',
+    daysUntil: 30
+  },
+  currentLocation: 'Mecca',
+  currentArea: 'Азизия',
+  progress: {
+    umrah: { currentStep: 2, completed: [1] },
+    hajj: { currentStep: 1, completed: [] }
+  },
+  favorites: ['p002', 'p010', 'p020']
+};
+
+</script>
+<script>
+/* ============ HELPERS ============ */
+function getPlaceById(id){return PLACES.find(function(p){return p.id===id})}
+function getCategory(c){return CATEGORIES[c]}
+function isFav(id){return CURRENT_USER.favorites.indexOf(id)>-1}
+function toggleFav(id){
+  var i=CURRENT_USER.favorites.indexOf(id);
+  if(i>-1)CURRENT_USER.favorites.splice(i,1);else CURRENT_USER.favorites.push(id);
+  try{localStorage.setItem('takia_fav',JSON.stringify(CURRENT_USER.favorites))}catch(e){}
+}
+function curLabel(l){return '$'.repeat(l||1)}
+function decl(n){var a=n%10,b=n%100;if(b>=11&&b<=14)return'мест';if(a===1)return'место';if(a>=2&&a<=4)return'места';return'мест'}
+try{var sv=localStorage.getItem('takia_fav');if(sv)CURRENT_USER.favorites=JSON.parse(sv)}catch(e){}
+
+/* ============ STATE ============ */
+var state={tab:'map',city:'Mecca',cat:'all',cuisine:'all'};
+var lmap=null,lmarkers=[];
+
+function toast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+(type||'');
+  clearTimeout(t._tm);t._tm=setTimeout(function(){t.classList.remove('show')},2400);
+}
+
+/* ============ NAVIGATION ============ */
+function go(tab){
+  // tab can be a screen id key: map, guides, fav, profile, place, step
+  var screenId='s-'+tab;
+  var sc=document.getElementById(screenId);
+  if(!sc)return;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  sc.classList.add('active');
+  sc.scrollTop=0;
+
+  // bottom nav highlight based on data-tab of screen
+  var navKey=sc.getAttribute('data-tab');
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    n.classList.toggle('active',n.getAttribute('data-nav')===navKey);
+  });
+
+  // top bar adjusts
+  updateTopbar(tab);
+
+  state.tab=tab;
+  if(tab==='map'&&lmap){setTimeout(function(){lmap.invalidateSize()},120);}
+  if(tab==='fav')renderFav();
+  if(tab==='profile')renderProfile();
+}
+
+function updateTopbar(tab){
+  var lg=document.getElementById('tbLogo');
+  var ac=document.getElementById('tbAction');
+  if(tab==='map'||tab==='guides'||tab==='fav'||tab==='profile'){
+    lg.innerHTML='<div class="mark">ﷲ</div>Takia';
+    lg.onclick=null;
+    if(tab==='profile'){ac.style.display='none';}
+    else{ac.style.display='flex';ac.textContent=CURRENT_USER.name[0];ac.onclick=function(){go('profile')};}
+  }else{
+    // detail screens: back button
+    var back=(tab==='place')?'map':'guides';
+    lg.innerHTML='<button class="tb-back">← Назад</button>';
+    lg.onclick=function(){go(back)};
+    ac.style.display='none';
+  }
+}
+
+/* ============ MAP ============ */
+function buildFilters(){
+  var order=['all','food','shop','pharmacy','money','prayer','medical','transport'];
+  var names={all:'Все'};
+  var html=order.map(function(k){
+    if(k==='all')return '<button class="chip active" data-cat="all" onclick="setCat(\'all\',this)"><span>📍</span>Все</button>';
+    var c=CATEGORIES[k];if(!c)return'';
+    return '<button class="chip" data-cat="'+k+'" onclick="setCat(\''+k+'\',this)"><span class="dot" style="background:'+c.color+'"></span>'+c.name+'</button>';
+  }).join('');
+  document.getElementById('filters').innerHTML=html;
+
+  var cu=['all'].concat(CUISINES);
+  var flags={'Казахская':'🇰🇿','Узбекская':'🇺🇿','Турецкая':'🇹🇷','Индийская':'🇮🇳','Арабская':'🇸🇦','Пакистанская':'🇵🇰','Фастфуд':'🍔'};
+  document.getElementById('cuisines').innerHTML=cu.map(function(c){
+    if(c==='all')return '<button class="cchip active" data-cu="all" onclick="setCuisine(\'all\',this)">Все кухни</button>';
+    return '<button class="cchip" data-cu="'+c+'" onclick="setCuisine(\''+c+'\',this)">'+(flags[c]||'')+' '+c+'</button>';
+  }).join('');
+}
+
+function setCat(cat,el){
+  state.cat=cat;
+  document.querySelectorAll('#filters .chip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  var cb=document.getElementById('cuisines');
+  if(cat==='food'){cb.classList.add('show');state.cuisine='all';
+    document.querySelectorAll('#cuisines .cchip').forEach(function(c){c.classList.remove('active')});
+    var f=document.querySelector('#cuisines .cchip[data-cu="all"]');if(f)f.classList.add('active');
+  }else{cb.classList.remove('show');state.cuisine='all';}
+  refreshMap();
+}
+function setCuisine(cu,el){
+  state.cuisine=cu;
+  document.querySelectorAll('#cuisines .cchip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  refreshMap();
+}
+
+function filteredPlaces(){
+  var arr=PLACES.filter(function(p){return p.city===state.city});
+  if(state.cat!=='all')arr=arr.filter(function(p){return p.category===state.cat});
+  if(state.cat==='food'&&state.cuisine!=='all')arr=arr.filter(function(p){return p.cuisine===state.cuisine});
+  return arr.sort(function(a,b){return a.distanceFromHaram-b.distanceFromHaram});
+}
+
+function initMap(){
+  var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
+  lmap=L.map('leafletMap',{zoomControl:true,attributionControl:true}).setView([ref.lat,ref.lng],16);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'
+  }).addTo(lmap);
+  // Haram marker
+  L.marker([ref.lat,ref.lng],{
+    icon:L.divIcon({className:'',html:'<div class="marker-kaaba">ﷲ</div>',iconSize:[46,46],iconAnchor:[23,23]}),
+    zIndexOffset:1000
+  }).addTo(lmap).bindTooltip(ref.name,{permanent:true,direction:'top',offset:[0,-26],className:'lbl-haram'});
+
+  lmap.on('zoomend',function(){
+    var show=lmap.getZoom()>=15;
+    document.querySelectorAll('.leaflet-tooltip.lbl').forEach(function(e){e.style.display=show?'':'none'});
+  });
+
+  setTimeout(function(){lmap.invalidateSize()},150);
+  setTimeout(function(){lmap.invalidateSize()},500);
+  window.addEventListener('resize',function(){if(lmap)lmap.invalidateSize()});
+
+  refreshMap();
+}
+
+function clearMarkers(){lmarkers.forEach(function(m){lmap.removeLayer(m)});lmarkers=[]}
+
+function refreshMap(){
+  if(!lmap)return;
+  clearMarkers();
+  var places=filteredPlaces();
+  document.getElementById('rsCount').textContent=places.length+' '+decl(places.length);
+
+  places.forEach(function(p){
+    var c=CATEGORIES[p.category];
+    var mk=L.marker([p.lat,p.lng],{
+      icon:L.divIcon({className:'',
+        html:'<div class="map-marker" style="background:'+c.color+'"><span>'+c.icon+'</span></div>',
+        iconSize:[34,34],iconAnchor:[17,30]})
+    }).addTo(lmap)
+      .bindTooltip(p.name,{permanent:true,direction:'right',offset:[14,-8],className:'lbl'})
+      .on('click',function(){openPlace(p.id)});
+    lmarkers.push(mk);
+  });
+
+  // fit bounds to show all points nicely within container
+  if(places.length){
+    var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
+    var pts=places.map(function(p){return[p.lat,p.lng]});
+    pts.push([ref.lat,ref.lng]);
+    try{lmap.fitBounds(pts,{padding:[50,50],maxZoom:17});}catch(e){}
+  }
+  renderRsList(places);
+}
+
+function renderRsList(places){
+  var el=document.getElementById('rsList');
+  if(!places.length){el.innerHTML='<div style="text-align:center;padding:26px;color:var(--ink-mute)">Ничего не найдено</div>';return;}
+  el.innerHTML=places.map(function(p){
+    var c=CATEGORIES[p.category];
+    return '<div class="place-row" onclick="openPlace(\''+p.id+'\')">'+
+      '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+c.icon+'</div>'+
+      '<div class="pr-info"><div class="pr-name">'+p.name+(isFav(p.id)?' ⭐':'')+'</div>'+
+      '<div class="pr-meta"><span class="'+(p.openNow?'open':'closed')+'">'+(p.openNow?'Открыто':'Закрыто')+'</span>'+
+      '<span>·</span><span>★ '+p.rating+'</span>'+
+      (p.cuisine?'<span>·</span><span>'+p.cuisine+'</span>':'')+
+      (p.priceLevel?'<span>·</span><span>'+curLabel(p.priceLevel)+'</span>':'')+'</div></div>'+
+      '<div class="pr-dist"><div class="n">'+(p.distanceFromHaram<1000?p.distanceFromHaram:(p.distanceFromHaram/1000).toFixed(1))+'</div>'+
+      '<div class="l">'+(p.distanceFromHaram<1000?'м':'км')+'</div></div></div>';
+  }).join('');
+}
+
+/* ============ PLACE DETAIL ============ */
+var pdMiniMap=null;
+function openPlace(id){
+  var p=getPlaceById(id);if(!p)return;
+  var c=CATEGORIES[p.category];
+  var html=
+    '<div class="pd-hero"><div class="em">'+(p.photos&&p.photos[0]?p.photos[0]:c.icon)+'</div></div>'+
+    '<div class="pd-body">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'+
+    '<div><h1 class="pd-name">'+p.name+'</h1>'+
+    '<div class="pd-cat"><span>'+c.icon+'</span>'+c.name+(p.cuisine?' · '+p.cuisine:'')+'</div></div>'+
+    '<button onclick="favFromDetail(\''+p.id+'\',this)" style="font-size:26px;color:'+(isFav(p.id)?'var(--gold)':'var(--ink-mute)')+'">'+(isFav(p.id)?'⭐':'☆')+'</button>'+
+    '</div>'+
+    '<div class="pd-stats">'+
+    '<div class="pd-stat"><div class="l">Рейтинг</div><div class="v rating">★ '+p.rating+'</div></div>'+
+    '<div class="pd-stat"><div class="l">Расстояние</div><div class="v">'+(p.distanceFromHaram<1000?p.distanceFromHaram+' м':(p.distanceFromHaram/1000).toFixed(1)+' км')+'</div></div>'+
+    '<div class="pd-stat"><div class="l">Сейчас</div><div class="v '+(p.openNow?'open':'closed')+'">'+(p.openNow?'Открыто':'Закрыто')+'</div></div>'+
+    (p.priceLevel?'<div class="pd-stat"><div class="l">Цены</div><div class="v">'+curLabel(p.priceLevel)+'</div></div>':'')+
+    '</div>'+
+    '<div class="pd-actions">'+
+    '<div class="pd-act" onclick="pdRoute(\''+p.id+'\')"><span class="ic">🧭</span>Маршрут</div>'+
+    '<div class="pd-act" onclick="pdCall(\''+p.id+'\')"><span class="ic">📞</span>Позвонить</div>'+
+    '<div class="pd-act" onclick="pdShare(\''+p.id+'\')"><span class="ic">↗</span>Поделиться</div>'+
+    '</div>'+
+    '<div class="pd-sec"><div class="lbl">Описание</div><div class="txt">'+p.description+'</div></div>'+
+    (p.features&&p.features.length?'<div class="pd-sec"><div class="lbl">Полезная информация</div><div class="pd-feats">'+p.features.map(function(f){return'<div class="pd-feat">'+f+'</div>'}).join('')+'</div></div>':'')+
+    '<div class="pd-sec"><div class="lbl">Часы работы</div><div class="txt">'+p.hours+'</div></div>'+
+    '<div class="pd-sec"><div class="lbl">На карте</div><div class="pd-mini"><div id="pdMiniMap"></div></div></div>'+
+    (function(){
+      var sim=PLACES.filter(function(x){return x.category===p.category&&x.city===p.city&&x.id!==p.id}).slice(0,4);
+      if(!sim.length)return'';
+      return '<div class="pd-sec"><div class="lbl">Похожие места рядом</div>'+sim.map(function(s){
+        return '<div class="place-row" style="padding:10px 0" onclick="openPlace(\''+s.id+'\')">'+
+        '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+c.icon+'</div>'+
+        '<div class="pr-info"><div class="pr-name">'+s.name+'</div>'+
+        '<div class="pr-meta"><span>★ '+s.rating+'</span>'+(s.cuisine?'<span>·</span><span>'+s.cuisine+'</span>':'')+'</div></div>'+
+        '<div class="pr-dist"><div class="n">'+(s.distanceFromHaram<1000?s.distanceFromHaram:(s.distanceFromHaram/1000).toFixed(1))+'</div><div class="l">'+(s.distanceFromHaram<1000?'м':'км')+'</div></div></div>';
+      }).join('')+'</div>';
+    })()+
+    '</div>';
+  document.getElementById('placeContent').innerHTML=html;
+  go('place');
+  setTimeout(function(){
+    if(pdMiniMap){pdMiniMap.remove();pdMiniMap=null;}
+    try{
+      pdMiniMap=L.map('pdMiniMap',{zoomControl:false,scrollWheelZoom:false,dragging:true,attributionControl:false}).setView([p.lat,p.lng],16);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd'}).addTo(pdMiniMap);
+      L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div class="map-marker" style="background:'+c.color+'"><span>'+c.icon+'</span></div>',iconSize:[34,34],iconAnchor:[17,30]})}).addTo(pdMiniMap);
+      setTimeout(function(){pdMiniMap.invalidateSize()},200);
+    }catch(e){
+      document.getElementById('pdMiniMap').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#eef3f0;color:var(--ink-mute);font-size:13px">📍 '+p.name+'</div>';
+    }
+  },150);
+}
+function favFromDetail(id,btn){
+  toggleFav(id);
+  var f=isFav(id);
+  btn.textContent=f?'⭐':'☆';btn.style.color=f?'var(--gold)':'var(--ink-mute)';
+  toast(f?'Добавлено в избранное ⭐':'Убрано из избранного',f?'success':'');
+}
+function pdRoute(id){var p=getPlaceById(id);toast('Маршрут пешком ~'+Math.round(p.distanceFromHaram/80)+' мин','success')}
+function pdCall(id){var p=getPlaceById(id);if(p.phone){if(confirm('Позвонить '+p.name+'?\n'+p.phone))location.href='tel:'+p.phone}else toast('Телефон не указан','warning')}
+function pdShare(id){var p=getPlaceById(id);if(navigator.share){navigator.share({title:p.name,text:p.description})}else{toast('Ссылка скопирована 📋','success')}}
+
+/* ============ GUIDES ============ */
+function openGuide(type,step){
+  var g=GUIDES[type];if(!g)return;
+  var st=g.steps.find(function(s){return s.id===step});if(!st)return;
+  var prog=Math.round((step/g.steps.length)*100);
+
+  var stepper=g.steps.map(function(s){
+    var cls=s.id===step?'active':(s.id<step?'done':'');
+    return '<button class="gs-dot '+cls+'" onclick="openGuide(\''+type+'\','+s.id+')">'+s.id+'. '+s.title.split(' ').slice(0,2).join(' ')+'</button>';
+  }).join('');
+
+  var secs=st.sections.map(function(sec){
+    if(sec.type==='instruction')return '<div class="gs-block"><span class="gs-tag">Инструкция</span><h3 class="gs-bti">'+sec.title+'</h3><div class="gs-txt">'+sec.content+'</div></div>';
+    if(sec.type==='dua')return '<div class="gs-block"><span class="gs-tag">Дуа</span><h3 class="gs-bti">'+sec.title+'</h3><div class="dua"><div class="dua-ar">'+sec.arabic+'</div><div class="dua-tr">'+sec.translit+'</div><div class="dua-tl">«'+sec.translation+'»</div><button class="dua-play" onclick="toast(\'🔊 '+sec.title+'\',\'success\')">🔊 Послушать произношение</button></div></div>';
+    if(sec.type==='warning')return '<div class="gs-block"><div class="warn"><div class="wt">⚠ '+sec.title+'</div><div class="wc">'+sec.content+'</div></div></div>';
+    if(sec.type==='audio')return '<div class="gs-block"><span class="gs-tag">Аудио</span><h3 class="gs-bti">'+sec.title+'</h3><div class="audio"><button class="pb" onclick="toast(\'▶ '+sec.duration+'\',\'success\')">▶</button><div class="ai"><div class="at">'+sec.speaker+'</div><div class="am">⏱ '+sec.duration+'</div></div></div></div>';
+    return'';
+  }).join('');
+
+  var nextLbl=step<g.steps.length?'Готово, дальше →':'🎉 Завершить';
+  var html=
+    '<div class="gs-hero'+(type==='hajj'?' hajj':'')+'">'+
+    '<div class="gs-cnt">'+g.title+' · Шаг '+step+' из '+g.steps.length+'</div>'+
+    '<div class="gs-ti">'+st.title+'</div><div class="gs-su">'+st.subtitle+'</div>'+
+    '<div class="gs-pbar"><div class="gs-pfill" style="width:'+prog+'%"></div></div></div>'+
+    '<div class="gs-stepper">'+stepper+'</div>'+
+    '<div class="gs-body"><div class="gs-intro">'+st.intro+'</div>'+secs+'</div>'+
+    '<div class="gs-nav">'+
+    '<button class="gs-prev" '+(step===1?'disabled':'')+' onclick="openGuide(\''+type+'\','+(step-1)+')">← Назад</button>'+
+    '<button class="gs-next" onclick="guideNext(\''+type+'\','+step+','+g.steps.length+')">'+nextLbl+'</button></div>';
+  document.getElementById('stepContent').innerHTML=html;
+  go('step');
+}
+function guideNext(type,step,total){
+  if(step<total){toast('Шаг пройден ✓','success');setTimeout(function(){openGuide(type,step+1)},600);}
+  else{toast('🎉 Руководство пройдено!','success');setTimeout(function(){go('guides')},1200);}
+}
+
+/* ============ FAVORITES ============ */
+function renderFav(){
+  var el=document.getElementById('favContent');
+  var fl=CURRENT_USER.favorites.map(getPlaceById).filter(Boolean);
+  if(!fl.length){
+    el.innerHTML='<div class="empty"><div class="ic">⭐</div><div class="ti">Пока пусто</div><p style="margin-bottom:18px">Открывайте места и нажимайте ⭐</p><button class="pd-act" style="display:inline-block;padding:12px 24px;background:var(--green-deep);color:#fff" onclick="go(\'map\')">К карте →</button></div>';
+    return;
+  }
+  el.innerHTML='<div class="fav-list">'+fl.map(function(p){
+    var c=CATEGORIES[p.category];
+    return '<div class="place-row" onclick="openPlace(\''+p.id+'\')">'+
+      '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+c.icon+'</div>'+
+      '<div class="pr-info"><div class="pr-name">'+p.name+'</div>'+
+      '<div class="pr-meta"><span class="'+(p.openNow?'open':'closed')+'">'+(p.openNow?'Открыто':'Закрыто')+'</span><span>·</span><span>★ '+p.rating+'</span><span>·</span><span>'+(p.city==='Mecca'?'Мекка':'Медина')+'</span></div></div>'+
+      '<div class="pr-dist"><div class="n">'+(p.distanceFromHaram<1000?p.distanceFromHaram:(p.distanceFromHaram/1000).toFixed(1))+'</div><div class="l">'+(p.distanceFromHaram<1000?'м':'км')+'</div></div></div>';
+  }).join('')+'</div>';
+}
+
+/* ============ PROFILE ============ */
+function renderProfile(){
+  var u=CURRENT_USER;
+  var um=u.progress.umrah,hj=u.progress.hajj;
+  var umP=Math.round((um.completed.length/4)*100);
+  var hjP=Math.round((hj.completed.length/5)*100);
+  var html=
+    '<div class="pf-head">'+
+    '<div class="pf-av">'+u.name[0]+'</div>'+
+    '<div class="pf-name">'+u.name+'</div>'+
+    '<div class="pf-email">'+u.email+'</div>'+
+    '<div class="pf-pro">★ Takia Pro · до '+u.premiumUntil.split('-')[0]+'</div>'+
+    '</div>'+
+    '<div class="pf-trip">'+
+    '<div class="ti">Ваша поездка: <strong>'+(u.trip.type==='umrah'?'Умра':'Хадж')+'</strong><br>Дата вылета: <strong>'+u.trip.plannedDate+'</strong></div>'+
+    '<div style="text-align:right"><div class="cd">'+u.trip.daysUntil+'</div><div class="cl">дней</div></div>'+
+    '</div>'+
+    '<div class="pf-prog"><div class="pt">Прогресс по обрядам</div>'+
+    '<div class="pf-prog-card"><div class="r"><span>Умра</span><span>'+um.completed.length+' / 4 этапа</span></div><div class="bar"><div class="fill" style="width:'+umP+'%"></div></div></div>'+
+    '<div class="pf-prog-card"><div class="r"><span>Хадж</span><span>'+hj.completed.length+' / 5 этапов</span></div><div class="bar"><div class="fill" style="width:'+hjP+'%"></div></div></div>'+
+    '</div>'+
+    '<div class="pf-menu">'+
+    '<div class="pf-mi" onclick="toast(\'Язык интерфейса — скоро\')"><div class="ic">🌐</div><div class="lb">Язык интерфейса</div><div class="ar">Русский ›</div></div>'+
+    '<div class="pf-mi" onclick="toast(\'Уведомления — скоро\')"><div class="ic">🔔</div><div class="lb">Уведомления</div><div class="ar">›</div></div>'+
+    '<div class="pf-mi" onclick="toast(\'Управление Premium — скоро\')"><div class="ic">⭐</div><div class="lb">Подписка Premium</div><div class="ar">Активна ›</div></div>'+
+    '<div class="pf-mi" onclick="toast(\'Помощь — скоро\')"><div class="ic">❓</div><div class="lb">Помощь и поддержка</div><div class="ar">›</div></div>'+
+    '<div class="pf-mi" onclick="toast(\'О приложении — скоро\')"><div class="ic">ℹ️</div><div class="lb">О Takia</div><div class="ar">›</div></div>'+
+    '<div class="pf-mi danger" onclick="if(confirm(\'Выйти из аккаунта?\'))toast(\'Выход выполнен\')"><div class="ic">⏏</div><div class="lb">Выйти</div><div class="ar"></div></div>'+
+    '</div>';
+  document.getElementById('profileContent').innerHTML=html;
+}
+
+/* ============ INIT ============ */
+document.getElementById('tbAction').textContent=CURRENT_USER.name[0];
+buildFilters();
 updateTopbar('map');
+
+function refreshMapListOnly(){
+  var places=filteredPlaces();
+  document.getElementById('rsCount').textContent=places.length+' '+decl(places.length);
+  renderRsList(places);
+}
+
+// Draw a clean static SVG map (used if Leaflet can't load for any reason)
+function drawSvgMap(){
+  var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
+  var places=filteredPlaces();
+  document.getElementById('rsCount').textContent=places.length+' '+decl(places.length);
+  renderRsList(places);
+
+  var pts=places.concat([{lat:ref.lat,lng:ref.lng}]);
+  var minLat=Math.min.apply(null,pts.map(function(p){return p.lat}));
+  var maxLat=Math.max.apply(null,pts.map(function(p){return p.lat}));
+  var minLng=Math.min.apply(null,pts.map(function(p){return p.lng}));
+  var maxLng=Math.max.apply(null,pts.map(function(p){return p.lng}));
+  var pLat=(maxLat-minLat)*0.28+0.0012, pLng=(maxLng-minLng)*0.28+0.0012;
+  minLat-=pLat;maxLat+=pLat;minLng-=pLng;maxLng+=pLng;
+  var W=1000,H=1000;
+  function X(l){return ((l-minLng)/(maxLng-minLng))*W}
+  function Y(l){return H-((l-minLat)/(maxLat-minLat))*H}
+  var hx=X(ref.lng),hy=Y(ref.lat);
+
+  var roads='';
+  for(var i=1;i<9;i++){
+    roads+='<line x1="'+(W/9*i)+'" y1="0" x2="'+(W/9*i)+'" y2="'+H+'" stroke="#dde6e1" stroke-width="'+(i%2?5:9)+'"/>';
+    roads+='<line x1="0" y1="'+(H/9*i)+'" x2="'+W+'" y2="'+(H/9*i)+'" stroke="#dde6e1" stroke-width="'+(i%2?5:9)+'"/>';
+  }
+  roads+='<circle cx="'+hx+'" cy="'+hy+'" r="130" fill="none" stroke="#d4ddd8" stroke-width="8"/>';
+  roads+='<circle cx="'+hx+'" cy="'+hy+'" r="250" fill="none" stroke="#d4ddd8" stroke-width="6"/>';
+  for(var a=0;a<360;a+=45){
+    var r=a*Math.PI/180;
+    roads+='<line x1="'+hx+'" y1="'+hy+'" x2="'+(hx+Math.cos(r)*440)+'" y2="'+(hy+Math.sin(r)*440)+'" stroke="#dde6e1" stroke-width="6"/>';
+  }
+
+  // spread overlapping markers
+  var pos=places.map(function(p){return{p:p,x:X(p.lng),y:Y(p.lat)}});
+  var md=118;
+  for(var it=0;it<70;it++){
+    for(var a1=0;a1<pos.length;a1++)for(var b1=a1+1;b1<pos.length;b1++){
+      var A=pos[a1],B=pos[b1],dx=B.x-A.x,dy=B.y-A.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+      if(d<md){var pu=(md-d)/2,ux=dx/d,uy=dy/d;A.x-=ux*pu;A.y-=uy*pu;B.x+=ux*pu;B.y+=uy*pu;}
+    }
+  }
+  pos.forEach(function(o){o.x=Math.max(40,Math.min(W-40,o.x));o.y=Math.max(40,Math.min(H-40,o.y));});
+
+  var pins='';
+  pos.forEach(function(o){
+    var c=CATEGORIES[o.p.category];
+    pins+='<g style="cursor:pointer" transform="translate('+o.x+','+o.y+')" onclick="openPlace(\''+o.p.id+'\')">'+
+      '<circle r="18" fill="'+c.color+'" stroke="#fff" stroke-width="3"/>'+
+      '<text y="6" font-size="16" text-anchor="middle">'+c.icon+'</text>'+
+      '<g transform="translate(23,-10)"><rect rx="5" height="21" width="'+(10+o.p.name.length*6.1)+'" fill="rgba(255,255,255,.96)" stroke="rgba(13,77,53,.15)"/>'+
+      '<text x="6" y="15" font-size="11.5" font-weight="700" fill="#1a2620">'+o.p.name+'</text></g></g>';
+  });
+
+  document.getElementById('mapBox').innerHTML=
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;background:#eef3f0">'+
+    '<rect width="'+W+'" height="'+H+'" fill="#eef3f0"/>'+
+    '<circle cx="'+(W*0.16)+'" cy="'+(H*0.19)+'" r="85" fill="#dcebe2"/>'+
+    '<circle cx="'+(W*0.84)+'" cy="'+(H*0.8)+'" r="100" fill="#dcebe2"/>'+
+    roads+
+    '<g transform="translate('+hx+','+hy+')">'+
+    '<circle r="32" fill="#0d4d35" stroke="#c9a44a" stroke-width="4"/>'+
+    '<text y="9" font-size="24" text-anchor="middle" fill="#c9a44a">ﷲ</text>'+
+    '<g transform="translate(0,-50)"><rect x="-58" rx="7" height="25" width="116" fill="#0d4d35"/>'+
+    '<text y="17" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">'+(state.city==='Mecca'?'Аль-Харам':'ан-Набави')+'</text></g></g>'+
+    pins+'</svg>';
+}
+
+// Wait for Leaflet to actually finish loading before deciding.
+// The Leaflet <script> tag may not be done when this code runs.
+(function waitLeaflet(tries){
+  if(typeof L!=='undefined'){          // Leaflet ready -> real interactive map
+    initMap();
+    return;
+  }
+  if(tries<=0){                        // Gave up -> static SVG map (still looks like a map)
+    drawSvgMap();
+    return;
+  }
+  setTimeout(function(){waitLeaflet(tries-1)},150);   // check again in 150ms
+})(40);  // up to ~6 seconds of waiting
+
+// Also re-render SVG fallback when filters change (if in fallback mode)
+var _origRefresh=refreshMap;
+refreshMap=function(){
+  if(typeof L!=='undefined'&&lmap){_origRefresh();}
+  else{drawSvgMap();}
+};
+
 
 </script>
 </body>
