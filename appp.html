@@ -1484,11 +1484,11 @@ function go(tab){
   // top bar adjusts
   updateTopbar(tab);
 
-  // Когда открываем карту — пересчитать размер (Leaflet грузит тайлы
-  // полностью только когда контейнер виден в полном размере).
-  if(tab==='map' && lmap){
-    setTimeout(function(){ lmap.invalidateSize(true); },60);
-    setTimeout(function(){ lmap.invalidateSize(true); },300);
+  // Когда открываем карту — пересчитать размер и догрузить тайлы
+  // (Leaflet грузит тайлы полностью только когда контейнер виден).
+  if(tab==='map' && lmap && window._takiaEnsureSized){
+    setTimeout(function(){ window._takiaEnsureSized(true); },60);
+    setTimeout(function(){ window._takiaEnsureSized(true); },350);
   }
 
   state.tab=tab;
@@ -1587,17 +1587,48 @@ function initMap(){
     document.querySelectorAll('.leaflet-tooltip.lbl').forEach(function(e){e.style.display=show?'':'none'});
   });
 
-  // Force correct sizing on mobile Chrome (container measured after layout)
-  function fix(){ if(lmap) lmap.invalidateSize(true); }
-  requestAnimationFrame(fix);
-  setTimeout(fix,200); setTimeout(fix,600); setTimeout(fix,1200); setTimeout(fix,2500);
+  // Надёжный фикс размера карты: «шахматка» тайлов и сбитый fitBounds
+  // возникают, когда Leaflet вычислил размер до того, как контейнер
+  // получил финальные размеры. Решение — invalidateSize + перерисовка
+  // тайлов + повторный fitBounds, плюс ResizeObserver на контейнер.
+  function ensureSized(refit){
+    if(!lmap) return;
+    lmap.invalidateSize(true);
+    if(tiles && tiles.redraw) tiles.redraw();   // догрузить недостающие тайлы
+    if(refit) refitToPlaces();                  // пересчитать вид по точкам
+  }
+  // первичные пересчёты с нарастающей задержкой
+  requestAnimationFrame(function(){ensureSized(false);});
+  setTimeout(function(){ensureSized(true);},250);
+  setTimeout(function(){ensureSized(true);},800);
+  setTimeout(function(){ensureSized(true);},1600);
+  setTimeout(function(){ensureSized(true);},3000);
+  // когда карта объявит готовность — ещё раз
+  lmap.whenReady(function(){setTimeout(function(){ensureSized(true);},100);});
+  // следим за реальными изменениями размера контейнера
+  if(window.ResizeObserver){
+    var ro=new ResizeObserver(function(){ensureSized(false);});
+    ro.observe(document.getElementById('mapBox'));
+  }
+  window._takiaEnsureSized=ensureSized;          // чтобы вызывать из go('map')
+  function fix(){ ensureSized(false); }
   window.addEventListener('resize',fix);
-  window.addEventListener('orientationchange',function(){setTimeout(fix,300);});
+  window.addEventListener('orientationchange',function(){setTimeout(function(){ensureSized(true);},300);});
 
   refreshMap();
 }
 
 function clearMarkers(){lmarkers.forEach(function(m){lmap.removeLayer(m)});lmarkers=[]}
+
+function refitToPlaces(){
+  if(!lmap) return;
+  var places=filteredPlaces();
+  if(!places.length) return;
+  var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
+  var pts=places.map(function(p){return[p.lat,p.lng]});
+  pts.push([ref.lat,ref.lng]);
+  try{lmap.fitBounds(pts,{padding:[50,50],maxZoom:17});}catch(e){}
+}
 
 function refreshMap(){
   if(!lmap)return;
