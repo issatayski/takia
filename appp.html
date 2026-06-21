@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Takia — Цифровой спутник паломника</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.css"
+      onerror="this.onerror=null;this.href='https://unpkg.com/[email protected]/dist/leaflet.css'">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
@@ -483,7 +484,32 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.js"></script>
+<script>
+/* ============ Leaflet loader: тройной CDN-fallback ============
+   Грузим Leaflet, пробуя источники по очереди. Если один CDN
+   недоступен/заблокирован — пробуем следующий. Только если все
+   три недоступны — приложение покажет SVG-заглушку (drawSvgMap).
+   Это убирает единственную точку отказа (раньше был один jsdelivr). */
+(function(){
+  var SOURCES = [
+    'https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.js',
+    'https://unpkg.com/[email protected]/dist/leaflet.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
+  ];
+  function tryLoad(i){
+    if(typeof L!=='undefined') return;          // уже загрузился
+    if(i>=SOURCES.length) return;               // все источники не удались -> SVG fallback сработает сам
+    var s=document.createElement('script');
+    s.src=SOURCES[i];
+    s.async=false;
+    s.onload=function(){ /* L готов; waitLeaflet ниже подхватит */ };
+    s.onerror=function(){ tryLoad(i+1); };       // этот CDN не отдал -> следующий
+    document.head.appendChild(s);
+  }
+  tryLoad(0);
+})();
+</script>
+
 <script>
 
 /* ============ DATA (embedded) ============ */
@@ -1529,9 +1555,21 @@ function filteredPlaces(){
 function initMap(){
   var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
   lmap=L.map('leafletMap',{zoomControl:true,attributionControl:true,scrollWheelZoom:true,touchZoom:true,doubleClickZoom:true,bounceAtZoomLimits:false}).setView([ref.lat,ref.lng],16);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  var tiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'
-  }).addTo(lmap);
+  });
+  // Если тайлы CARTO не грузятся (много ошибок) — переключаемся на прямой OSM
+  var tileErrors=0;
+  tiles.on('tileerror',function(){
+    tileErrors++;
+    if(tileErrors===8){            // CARTO явно недоступен -> запасной провайдер
+      lmap.removeLayer(tiles);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        maxZoom:19,attribution:'© OpenStreetMap'
+      }).addTo(lmap);
+    }
+  });
+  tiles.addTo(lmap);
   // Haram marker
   L.marker([ref.lat,ref.lng],{
     icon:L.divIcon({className:'',html:'<div class="marker-kaaba">ﷲ</div>',iconSize:[46,46],iconAnchor:[23,23]}),
@@ -1930,7 +1968,7 @@ function initSvgZoom(){
     return;
   }
   setTimeout(function(){waitLeaflet(tries-1)},150);   // check again in 150ms
-})(40);  // up to ~6 seconds of waiting
+})(80);  // up to ~12 сек ожидания — даём время перебрать 3 CDN по очереди
 
 // Also re-render SVG fallback when filters change (if in fallback mode)
 var _origRefresh=refreshMap;
