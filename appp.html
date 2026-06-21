@@ -268,10 +268,9 @@
   .map-marker span{display:flex;align-items:center;justify-content:center}
   .empty .ic svg{width:48px;height:48px}
 
-  /* Карта зумируется ВНУТРИ своей области, не растягивая макет */
-  #mapBox{touch-action:none;isolation:isolate;contain:layout paint;overscroll-behavior:contain}
-  #leafletMap{touch-action:none}
-  #mapBox .leaflet-container{touch-action:none}
+  /* Карта: зум-изоляция только для SVG-заглушки, НЕ для Leaflet
+     (contain/touch-action на Leaflet ломали отрисовку тайлов) */
+  #mapBox{overflow:hidden}
   /* SVG-схема (фоллбэк): зум/пан только внутри рамки */
   #svgMapWrap{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab}
   #svgMapWrap:active{cursor:grabbing}
