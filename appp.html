@@ -275,6 +275,50 @@
   #svgMapWrap{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab}
   #svgMapWrap:active{cursor:grabbing}
   #svgMapInner{transform-origin:0 0;will-change:transform}
+
+  /* ===== Экран "О Takia" (история) ===== */
+  #s-about{overflow-y:auto;background:#f3f6f4}
+  .about-hero{
+    background:linear-gradient(160deg,#0d4d35,#166548 60%,#1f8259);
+    color:#fff;padding:54px 24px 30px;position:relative;text-align:center;
+    border-radius:0 0 24px 24px;
+  }
+  .about-back{
+    position:absolute;top:16px;left:14px;background:rgba(255,255,255,0.14);
+    color:#fff;border:none;padding:7px 14px 7px 10px;border-radius:20px;
+    font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .about-mark{
+    width:64px;height:64px;margin:8px auto 12px;border:2px solid #f0d589;
+    border-radius:18px;display:flex;align-items:center;justify-content:center;
+    font-size:30px;color:#f0d589;
+  }
+  .about-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;letter-spacing:1px}
+  .about-tag{color:#f0d589;font-size:14px;margin-top:4px;font-weight:500}
+  .about-body{padding:24px 22px 48px;max-width:680px;margin:0 auto}
+  .about-lead{
+    font-size:16px;line-height:1.65;color:#0d4d35;font-weight:600;
+    background:#e8f3ee;border-radius:14px;padding:18px 18px;margin-bottom:8px;
+  }
+  .about-sec-label{
+    font-size:12px;letter-spacing:1.5px;text-transform:uppercase;
+    color:#c9a44a;font-weight:800;margin:26px 0 8px;
+  }
+  .about-p{font-size:15.5px;line-height:1.72;color:#3a4742;margin-bottom:13px}
+  .about-p b{color:#0d4d35}
+  .ar-w{font-size:1.15em;color:#166548;padding:0 2px;direction:rtl;unicode-bidi:isolate}
+  .about-quote{
+    border-left:3px solid #c9a44a;background:#fef6e7;
+    padding:14px 18px;border-radius:0 12px 12px 0;margin:18px 0;
+    font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;
+    line-height:1.5;color:#0d4d35;font-style:italic;
+  }
+  .about-foot{
+    margin-top:30px;background:#0d4d35;border-radius:16px;
+    padding:22px 20px;text-align:center;color:#fff;
+  }
+  .about-foot-mark{font-size:26px;color:#f0d589;margin-bottom:8px}
+  .about-foot-txt{font-size:14px;line-height:1.6;opacity:0.92}
 </style>
 </head>
 <body>
@@ -355,6 +399,78 @@
 <!-- ===== PROFILE ===== -->
 <div class="screen" id="s-profile" data-tab="profile">
   <div id="profileContent"></div>
+</div>
+
+<!-- ===== ABOUT TAKIA (история) ===== -->
+<div class="screen" id="s-about" data-tab="profile">
+  <div class="about-hero">
+    <button class="about-back" onclick="go('profile')">‹ Назад</button>
+    <div class="about-mark">ﷲ</div>
+    <div class="about-name">Takia</div>
+    <div class="about-tag">Тәкия — дом, что ждёт паломника</div>
+  </div>
+  <div class="about-body">
+
+    <div class="about-lead">
+      Имя «Takia» — не случайное слово. Оно уходит корнями в историю,
+      которой более полутора веков, и в путь, начатый одним из великих
+      сынов казахского народа.
+    </div>
+
+    <div class="about-sec-label">Откуда имя</div>
+    <p class="about-p">
+      <b>Тәкия</b> (от арабского <span class="ar-w">تكية</span>) — так называли дом,
+      где паломник, пришедший издалека, находил кров, еду и заботу.
+      Не гостиница ради прибыли, а место, построенное от сердца —
+      чтобы путник в чужом краю чувствовал себя как дома.
+    </p>
+
+    <div class="about-sec-label">1874 год · Кунанбай в Мекке</div>
+    <p class="about-p">
+      В 1874 году <b>Кунанбай Оскенбайулы</b> — би, ага-султан, отец великого
+      Абая — в возрасте семидесяти лет совершил хадж в Мекку. Для того
+      времени такой путь был почти подвигом: месяцы дороги через степи,
+      моря и пустыни.
+    </p>
+    <p class="about-p">
+      Прожив в Мекке около двух лет, Кунанбай построил там <b>«тәкия»</b> —
+      дом, служивший гостиницей и медресе для казахских паломников.
+      Чтобы те, кто пришёл из далёкой степи к святыням ислама, не
+      остались без крова, без помощи, без родного слова рядом.
+    </p>
+
+    <div class="about-quote">
+      «Чтобы путник из степи, пришедший к Дому Аллаха,
+      нашёл в чужом городе свой дом.»
+    </div>
+
+    <div class="about-sec-label">Продолжение пути</div>
+    <p class="about-p">
+      Полтора века спустя дорога к святыням изменилась. Сегодня паломник
+      прилетает за часы, а не идёт месяцами. Но главное осталось прежним:
+      человек оказывается в незнакомом городе, вдали от дома, и ему нужна
+      опора — куда пойти, где поесть, кому довериться, как совершить обряд.
+    </p>
+    <p class="about-p">
+      <b>Takia — это продолжение того самого пути.</b> То, что когда-то было
+      домом из камня, сегодня стало цифровым спутником в ладони. Мы не строим
+      стены — мы строим доверие: проверенные места, понятные руководства,
+      родной язык рядом в священном городе.
+    </p>
+    <p class="about-p">
+      Та же забота о паломнике, что вела Кунанбая полтора века назад —
+      теперь в твоём телефоне.
+    </p>
+
+    <div class="about-foot">
+      <div class="about-foot-mark">ﷲ</div>
+      <div class="about-foot-txt">
+        Takia продолжает традицию казахского гостеприимства
+        у святынь ислама.
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- BOTTOM NAV (single, fixed) -->
@@ -1630,7 +1746,7 @@ function renderProfile(){
     '<div class="pf-mi" onclick="toast(\'Уведомления — скоро\')"><div class="ic">🔔</div><div class="lb">Уведомления</div><div class="ar">›</div></div>'+
     '<div class="pf-mi" onclick="toast(\'Управление Premium — скоро\')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg></div><div class="lb">Подписка Premium</div><div class="ar">Активна ›</div></div>'+
     '<div class="pf-mi" onclick="toast(\'Помощь — скоро\')"><div class="ic">❓</div><div class="lb">Помощь и поддержка</div><div class="ar">›</div></div>'+
-    '<div class="pf-mi" onclick="toast(\'О приложении — скоро\')"><div class="ic">ℹ️</div><div class="lb">О Takia</div><div class="ar">›</div></div>'+
+    '<div class="pf-mi" onclick="go(\'about\')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></div><div class="lb">О Takia</div><div class="ar">›</div></div>'+
     '<div class="pf-mi danger" onclick="if(confirm(\'Выйти из аккаунта?\'))toast(\'Выход выполнен\')"><div class="ic">⏏</div><div class="lb">Выйти</div><div class="ar"></div></div>'+
     '</div>';
   document.getElementById('profileContent').innerHTML=html;
