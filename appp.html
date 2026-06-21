@@ -1485,6 +1485,13 @@ function go(tab){
   // top bar adjusts
   updateTopbar(tab);
 
+  // Когда открываем карту — пересчитать размер (Leaflet грузит тайлы
+  // полностью только когда контейнер виден в полном размере).
+  if(tab==='map' && lmap){
+    setTimeout(function(){ lmap.invalidateSize(true); },60);
+    setTimeout(function(){ lmap.invalidateSize(true); },300);
+  }
+
   state.tab=tab;
   if(tab==='map'&&lmap){setTimeout(function(){lmap.invalidateSize()},150);setTimeout(function(){lmap.invalidateSize()},400);}
   if(tab==='fav')renderFav();
@@ -1584,7 +1591,7 @@ function initMap(){
   // Force correct sizing on mobile Chrome (container measured after layout)
   function fix(){ if(lmap) lmap.invalidateSize(true); }
   requestAnimationFrame(fix);
-  setTimeout(fix,200); setTimeout(fix,600); setTimeout(fix,1200);
+  setTimeout(fix,200); setTimeout(fix,600); setTimeout(fix,1200); setTimeout(fix,2500);
   window.addEventListener('resize',fix);
   window.addEventListener('orientationchange',function(){setTimeout(fix,300);});
 
