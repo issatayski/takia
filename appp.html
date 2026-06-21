@@ -259,6 +259,22 @@
   @media (min-width:1100px){
     .pf-head{padding:48px 64px 36px}
   }
+
+  /* SVG-иконки: единый размер внутри контейнеров */
+  .ic svg{width:24px;height:24px;display:block}
+  .pr-ic svg{width:24px;height:24px;display:block}
+  .map-marker svg{width:18px;height:18px;display:block;transform:rotate(-45deg)}
+  .map-marker span{display:flex;align-items:center;justify-content:center}
+  .empty .ic svg{width:48px;height:48px}
+
+  /* Карта зумируется ВНУТРИ своей области, не растягивая макет */
+  #mapBox{touch-action:none;isolation:isolate;contain:layout paint;overscroll-behavior:contain}
+  #leafletMap{touch-action:none}
+  #mapBox .leaflet-container{touch-action:none}
+  /* SVG-схема (фоллбэк): зум/пан только внутри рамки */
+  #svgMapWrap{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab}
+  #svgMapWrap:active{cursor:grabbing}
+  #svgMapInner{transform-origin:0 0;will-change:transform}
 </style>
 </head>
 <body>
@@ -310,13 +326,13 @@
     <div class="sec-label">Дополнительно</div>
     <div class="g-extra">
       <div class="g-ex" onclick="toast('Подготовка к поездке — скоро')">
-        <div class="ic">🎒</div><div class="info"><div class="ti">Подготовка к поездке</div><div class="su">Чек-листы, что взять</div></div><div class="ar">→</div>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><div class="info"><div class="ti">Подготовка к поездке</div><div class="su">Чек-листы, что взять</div></div><div class="ar">→</div>
       </div>
       <div class="g-ex" onclick="toast('Зиярат в Медине — скоро')">
-        <div class="ic">🕌</div><div class="info"><div class="ti">Зиярат в Медине</div><div class="su">Исторические места</div></div><div class="ar">→</div>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M4 21v-9a8 8 0 0 1 16 0v9M4 21h16M9 21v-4a3 3 0 0 1 6 0v4M12 2v2"/></svg></div><div class="info"><div class="ti">Зиярат в Медине</div><div class="su">Исторические места</div></div><div class="ar">→</div>
       </div>
       <div class="g-ex" onclick="toast('Сборник дуа — скоро')">
-        <div class="ic">📿</div><div class="info"><div class="ti">Сборник дуа</div><div class="su">50+ дуа с переводом</div></div><div class="ar">→</div>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M4 5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 0-2 2V5zM20 5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 1 2 2V5z"/></svg></div><div class="info"><div class="ti">Сборник дуа</div><div class="su">50+ дуа с переводом</div></div><div class="ar">→</div>
       </div>
     </div>
   </div>
@@ -330,7 +346,7 @@
 <!-- ===== FAVORITES ===== -->
 <div class="screen" id="s-fav" data-tab="fav">
   <div class="pad" id="favWrap">
-    <h1 class="serif" style="font-size:30px;color:var(--green-deep);margin-bottom:6px">⭐ Избранное</h1>
+    <h1 class="serif" style="font-size:30px;color:var(--green-deep);margin-bottom:6px"><svg viewBox="0 0 24 24" fill="#f4c430" stroke="#f4c430" stroke-width="1.2" stroke-linejoin="round" style="width:30px;height:30px;vertical-align:-4px;margin-right:4px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>Избранное</h1>
     <p style="color:var(--ink-soft);font-size:14px;margin-bottom:22px">Сохранённые места для быстрого доступа</p>
     <div id="favContent"></div>
   </div>
@@ -343,10 +359,10 @@
 
 <!-- BOTTOM NAV (single, fixed) -->
 <div class="bottom-nav">
-  <button class="nav-item active" data-nav="map" onclick="go('map')"><span class="ic">🗺️</span>Карта</button>
-  <button class="nav-item" data-nav="guides" onclick="go('guides')"><span class="ic">📖</span>Обряды</button>
-  <button class="nav-item" data-nav="fav" onclick="go('fav')"><span class="ic">⭐</span>Избранное</button>
-  <button class="nav-item" data-nav="profile" onclick="go('profile')"><span class="ic">👤</span>Кабинет</button>
+  <button class="nav-item active" data-nav="map" onclick="go('map')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></span>Карта</button>
+  <button class="nav-item" data-nav="guides" onclick="go('guides')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 0-2 2V5zM20 5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 1 2 2V5z"/></svg></span>Обряды</button>
+  <button class="nav-item" data-nav="fav" onclick="go('fav')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg></span>Избранное</button>
+  <button class="nav-item" data-nav="profile" onclick="go('profile')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>Кабинет</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -361,17 +377,39 @@
 
 // Categories
 const CATEGORIES = {
-  food: { id: 'food', name: 'Еда', icon: '🍽', color: '#e85a4f', bgColor: '#fde2dd' },
-  shop: { id: 'shop', name: 'Магазины', icon: '🛒', color: '#ff9f43', bgColor: '#ffefd9' },
-  pharmacy: { id: 'pharmacy', name: 'Аптеки', icon: '⚕', color: '#5b9bf2', bgColor: '#ddebfc' },
-  money: { id: 'money', name: 'Обмен', icon: '$', color: '#8e74e8', bgColor: '#ece3fa' },
-  prayer: { id: 'prayer', name: 'Намаз', icon: '🕌', color: '#4ecdc4', bgColor: '#dbf5f2' },
-  medical: { id: 'medical', name: 'Медицина', icon: '🏥', color: '#5b9bf2', bgColor: '#ddebfc' },
-  transport: { id: 'transport', name: 'Транспорт', icon: '🚇', color: '#a89888', bgColor: '#ede8e1' }
+  food: { id: 'food', name: 'Еда', icon: 'food', color: '#e85a4f', bgColor: '#fde2dd' },
+  shop: { id: 'shop', name: 'Магазины', icon: 'shop', color: '#ff9f43', bgColor: '#ffefd9' },
+  pharmacy: { id: 'pharmacy', name: 'Аптеки', icon: 'pharmacy', color: '#5b9bf2', bgColor: '#ddebfc' },
+  money: { id: 'money', name: 'Обмен', icon: 'money', color: '#8e74e8', bgColor: '#ece3fa' },
+  prayer: { id: 'prayer', name: 'Намаз', icon: 'prayer', color: '#4ecdc4', bgColor: '#dbf5f2' },
+  medical: { id: 'medical', name: 'Медицина', icon: 'medical', color: '#5b9bf2', bgColor: '#ddebfc' },
+  transport: { id: 'transport', name: 'Транспорт', icon: 'transport', color: '#a89888', bgColor: '#ede8e1' }
 };
 
 // Cuisines for filtering food places
 const CUISINES = ['Казахская', 'Узбекская', 'Турецкая', 'Индийская', 'Арабская', 'Пакистанская', 'Фастфуд'];
+
+// ============================================
+// TAKIA — Единый набор SVG-иконок (line style)
+// Заменяет эмодзи. Один стиль: тонкая линия, stroke=currentColor.
+// ============================================
+var ICONS = {
+  food:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3M6 3v18M18 3c-1.7 0-3 2.2-3 5s1.3 4 3 4v9"/></svg>',
+  shop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-1.5 11a1 1 0 0 1-1 .9H5.5a1 1 0 0 1-1-.9L3 9zM3 9l2-5h14l2 5M9 13a3 3 0 0 0 6 0"/></svg>',
+  pharmacy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>',
+  money:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2 2 0 0 1 2-1.5h1a2 2 0 0 1 0 4h-1a2 2 0 0 0 0 4h1a2 2 0 0 0 2-1.5"/></svg>',
+  prayer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-9a8 8 0 0 1 16 0v9M4 21h16M9 21v-4a3 3 0 0 1 6 0v4M12 2v2"/></svg>',
+  medical:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3h2a1 1 0 0 1 1 1v3h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3H7a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h3V4a1 1 0 0 1 1-1z"/></svg>',
+  transport:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M8 17v2M16 17v2M8 7h8"/><circle cx="8" cy="14" r="0.5" fill="currentColor"/><circle cx="16" cy="14" r="0.5" fill="currentColor"/></svg>',
+  // навигация
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>',
+  guides:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 0-2 2V5zM20 5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 1 2 2V5z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>',
+  starFill:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>',
+  profile:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'
+};
+function svgIcon(key){ return ICONS[key] || ICONS.shop; }
+
 
 // Reference points
 const HARAM_MECCA = { lat: 21.4225, lng: 39.8262, name: 'Масджид аль-Харам' };
@@ -1374,7 +1412,7 @@ function filteredPlaces(){
 
 function initMap(){
   var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
-  lmap=L.map('leafletMap',{zoomControl:true,attributionControl:true}).setView([ref.lat,ref.lng],16);
+  lmap=L.map('leafletMap',{zoomControl:true,attributionControl:true,scrollWheelZoom:true,touchZoom:true,doubleClickZoom:true,bounceAtZoomLimits:false}).setView([ref.lat,ref.lng],16);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'
   }).addTo(lmap);
@@ -1411,7 +1449,7 @@ function refreshMap(){
     var c=CATEGORIES[p.category];
     var mk=L.marker([p.lat,p.lng],{
       icon:L.divIcon({className:'',
-        html:'<div class="map-marker" style="background:'+c.color+'"><span>'+c.icon+'</span></div>',
+        html:'<div class="map-marker" style="background:'+c.color+'"><span>'+svgIcon(c.icon)+'</span></div>',
         iconSize:[34,34],iconAnchor:[17,30]})
     }).addTo(lmap)
       .bindTooltip(p.name,{permanent:true,direction:'right',offset:[14,-8],className:'lbl'})
@@ -1435,8 +1473,8 @@ function renderRsList(places){
   el.innerHTML=places.map(function(p){
     var c=CATEGORIES[p.category];
     return '<div class="place-row" onclick="openPlace(\''+p.id+'\')">'+
-      '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+c.icon+'</div>'+
-      '<div class="pr-info"><div class="pr-name">'+p.name+(isFav(p.id)?' ⭐':'')+'</div>'+
+      '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+svgIcon(c.icon)+'</div>'+
+      '<div class="pr-info"><div class="pr-name">'+p.name+(isFav(p.id)?'<svg viewBox="0 0 24 24" fill="#c9a44a" stroke="#c9a44a" stroke-width="1.5" style="width:15px;height:15px;vertical-align:-2px;margin-left:4px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>':'')+'</div>'+
       '<div class="pr-meta"><span class="'+(p.openNow?'open':'closed')+'">'+(p.openNow?'Открыто':'Закрыто')+'</span>'+
       '<span>·</span><span>★ '+p.rating+'</span>'+
       (p.cuisine?'<span>·</span><span>'+p.cuisine+'</span>':'')+
@@ -1456,8 +1494,8 @@ function openPlace(id){
     '<div class="pd-body">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'+
     '<div><h1 class="pd-name">'+p.name+'</h1>'+
-    '<div class="pd-cat"><span>'+c.icon+'</span>'+c.name+(p.cuisine?' · '+p.cuisine:'')+'</div></div>'+
-    '<button onclick="favFromDetail(\''+p.id+'\',this)" style="font-size:26px;color:'+(isFav(p.id)?'var(--gold)':'var(--ink-mute)')+'">'+(isFav(p.id)?'⭐':'☆')+'</button>'+
+    '<div class="pd-cat"><span>'+svgIcon(c.icon)+'</span>'+c.name+(p.cuisine?' · '+p.cuisine:'')+'</div></div>'+
+    '<button onclick="favFromDetail(\''+p.id+'\',this)" style="font-size:26px;color:'+(isFav(p.id)?'var(--gold)':'var(--ink-mute)')+'">'+(isFav(p.id)?'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>')+'</button>'+
     '</div>'+
     '<div class="pd-stats">'+
     '<div class="pd-stat"><div class="l">Рейтинг</div><div class="v rating">★ '+p.rating+'</div></div>'+
@@ -1466,8 +1504,8 @@ function openPlace(id){
     (p.priceLevel?'<div class="pd-stat"><div class="l">Цены</div><div class="v">'+curLabel(p.priceLevel)+'</div></div>':'')+
     '</div>'+
     '<div class="pd-actions">'+
-    '<div class="pd-act" onclick="pdRoute(\''+p.id+'\')"><span class="ic">🧭</span>Маршрут</div>'+
-    '<div class="pd-act" onclick="pdCall(\''+p.id+'\')"><span class="ic">📞</span>Позвонить</div>'+
+    '<div class="pd-act" onclick="pdRoute(\''+p.id+'\')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><circle cx="12" cy="12" r="9"/><path d="M16 8l-2 6-6 2 2-6z"/></svg></span>Маршрут</div>'+
+    '<div class="pd-act" onclick="pdCall(\''+p.id+'\')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span>Позвонить</div>'+
     '<div class="pd-act" onclick="pdShare(\''+p.id+'\')"><span class="ic">↗</span>Поделиться</div>'+
     '</div>'+
     '<div class="pd-sec"><div class="lbl">Описание</div><div class="txt">'+p.description+'</div></div>'+
@@ -1479,7 +1517,7 @@ function openPlace(id){
       if(!sim.length)return'';
       return '<div class="pd-sec"><div class="lbl">Похожие места рядом</div>'+sim.map(function(s){
         return '<div class="place-row" style="padding:10px 0" onclick="openPlace(\''+s.id+'\')">'+
-        '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+c.icon+'</div>'+
+        '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+svgIcon(c.icon)+'</div>'+
         '<div class="pr-info"><div class="pr-name">'+s.name+'</div>'+
         '<div class="pr-meta"><span>★ '+s.rating+'</span>'+(s.cuisine?'<span>·</span><span>'+s.cuisine+'</span>':'')+'</div></div>'+
         '<div class="pr-dist"><div class="n">'+(s.distanceFromHaram<1000?s.distanceFromHaram:(s.distanceFromHaram/1000).toFixed(1))+'</div><div class="l">'+(s.distanceFromHaram<1000?'м':'км')+'</div></div></div>';
@@ -1493,7 +1531,7 @@ function openPlace(id){
     try{
       pdMiniMap=L.map('pdMiniMap',{zoomControl:false,scrollWheelZoom:false,dragging:true,attributionControl:false}).setView([p.lat,p.lng],16);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd'}).addTo(pdMiniMap);
-      L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div class="map-marker" style="background:'+c.color+'"><span>'+c.icon+'</span></div>',iconSize:[34,34],iconAnchor:[17,30]})}).addTo(pdMiniMap);
+      L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div class="map-marker" style="background:'+c.color+'"><span>'+svgIcon(c.icon)+'</span></div>',iconSize:[34,34],iconAnchor:[17,30]})}).addTo(pdMiniMap);
       setTimeout(function(){pdMiniMap.invalidateSize()},200);
     }catch(e){
       document.getElementById('pdMiniMap').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#eef3f0;color:var(--ink-mute);font-size:13px">📍 '+p.name+'</div>';
@@ -1503,8 +1541,8 @@ function openPlace(id){
 function favFromDetail(id,btn){
   toggleFav(id);
   var f=isFav(id);
-  btn.textContent=f?'⭐':'☆';btn.style.color=f?'var(--gold)':'var(--ink-mute)';
-  toast(f?'Добавлено в избранное ⭐':'Убрано из избранного',f?'success':'');
+  btn.innerHTML=f?'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>';btn.style.color=f?'var(--gold)':'var(--ink-mute)';
+  toast(f?'Добавлено в избранное':'Убрано из избранного',f?'success':'');
 }
 function pdRoute(id){var p=getPlaceById(id);toast('Маршрут пешком ~'+Math.round(p.distanceFromHaram/80)+' мин','success')}
 function pdCall(id){var p=getPlaceById(id);if(p.phone){if(confirm('Позвонить '+p.name+'?\n'+p.phone))location.href='tel:'+p.phone}else toast('Телефон не указан','warning')}
@@ -1523,7 +1561,7 @@ function openGuide(type,step){
 
   var secs=st.sections.map(function(sec){
     if(sec.type==='instruction')return '<div class="gs-block"><span class="gs-tag">Инструкция</span><h3 class="gs-bti">'+sec.title+'</h3><div class="gs-txt">'+sec.content+'</div></div>';
-    if(sec.type==='dua')return '<div class="gs-block"><span class="gs-tag">Дуа</span><h3 class="gs-bti">'+sec.title+'</h3><div class="dua"><div class="dua-ar">'+sec.arabic+'</div><div class="dua-tr">'+sec.translit+'</div><div class="dua-tl">«'+sec.translation+'»</div><button class="dua-play" onclick="toast(\'🔊 '+sec.title+'\',\'success\')">🔊 Послушать произношение</button></div></div>';
+    if(sec.type==='dua')return '<div class="gs-block"><span class="gs-tag">Дуа</span><h3 class="gs-bti">'+sec.title+'</h3><div class="dua"><div class="dua-ar">'+sec.arabic+'</div><div class="dua-tr">'+sec.translit+'</div><div class="dua-tl">«'+sec.translation+'»</div><button class="dua-play" onclick="toast(\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9a3 3 0 0 1 0 6M19.5 7a6 6 0 0 1 0 10"/></svg> '+sec.title+'\',\'success\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9a3 3 0 0 1 0 6M19.5 7a6 6 0 0 1 0 10"/></svg> Послушать произношение</button></div></div>';
     if(sec.type==='warning')return '<div class="gs-block"><div class="warn"><div class="wt">⚠ '+sec.title+'</div><div class="wc">'+sec.content+'</div></div></div>';
     if(sec.type==='audio')return '<div class="gs-block"><span class="gs-tag">Аудио</span><h3 class="gs-bti">'+sec.title+'</h3><div class="audio"><button class="pb" onclick="toast(\'▶ '+sec.duration+'\',\'success\')">▶</button><div class="ai"><div class="at">'+sec.speaker+'</div><div class="am">⏱ '+sec.duration+'</div></div></div></div>';
     return'';
@@ -1553,13 +1591,13 @@ function renderFav(){
   var el=document.getElementById('favContent');
   var fl=CURRENT_USER.favorites.map(getPlaceById).filter(Boolean);
   if(!fl.length){
-    el.innerHTML='<div class="empty"><div class="ic">⭐</div><div class="ti">Пока пусто</div><p style="margin-bottom:18px">Открывайте места и нажимайте ⭐</p><button class="pd-act" style="display:inline-block;padding:12px 24px;background:var(--green-deep);color:#fff" onclick="go(\'map\')">К карте →</button></div>';
+    el.innerHTML='<div class="empty"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg></div><div class="ti">Пока пусто</div><p style="margin-bottom:18px">Открывайте места и нажимайте ⭐</p><button class="pd-act" style="display:inline-block;padding:12px 24px;background:var(--green-deep);color:#fff" onclick="go(\'map\')">К карте →</button></div>';
     return;
   }
   el.innerHTML='<div class="fav-list">'+fl.map(function(p){
     var c=CATEGORIES[p.category];
     return '<div class="place-row" onclick="openPlace(\''+p.id+'\')">'+
-      '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+c.icon+'</div>'+
+      '<div class="pr-ic" style="background:'+c.bgColor+';color:'+c.color+'">'+svgIcon(c.icon)+'</div>'+
       '<div class="pr-info"><div class="pr-name">'+p.name+'</div>'+
       '<div class="pr-meta"><span class="'+(p.openNow?'open':'closed')+'">'+(p.openNow?'Открыто':'Закрыто')+'</span><span>·</span><span>★ '+p.rating+'</span><span>·</span><span>'+(p.city==='Mecca'?'Мекка':'Медина')+'</span></div></div>'+
       '<div class="pr-dist"><div class="n">'+(p.distanceFromHaram<1000?p.distanceFromHaram:(p.distanceFromHaram/1000).toFixed(1))+'</div><div class="l">'+(p.distanceFromHaram<1000?'м':'км')+'</div></div></div>';
@@ -1590,7 +1628,7 @@ function renderProfile(){
     '<div class="pf-menu">'+
     '<div class="pf-mi" onclick="toast(\'Язык интерфейса — скоро\')"><div class="ic">🌐</div><div class="lb">Язык интерфейса</div><div class="ar">Русский ›</div></div>'+
     '<div class="pf-mi" onclick="toast(\'Уведомления — скоро\')"><div class="ic">🔔</div><div class="lb">Уведомления</div><div class="ar">›</div></div>'+
-    '<div class="pf-mi" onclick="toast(\'Управление Premium — скоро\')"><div class="ic">⭐</div><div class="lb">Подписка Premium</div><div class="ar">Активна ›</div></div>'+
+    '<div class="pf-mi" onclick="toast(\'Управление Premium — скоро\')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" style="width:22px;height:22px"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg></div><div class="lb">Подписка Premium</div><div class="ar">Активна ›</div></div>'+
     '<div class="pf-mi" onclick="toast(\'Помощь — скоро\')"><div class="ic">❓</div><div class="lb">Помощь и поддержка</div><div class="ar">›</div></div>'+
     '<div class="pf-mi" onclick="toast(\'О приложении — скоро\')"><div class="ic">ℹ️</div><div class="lb">О Takia</div><div class="ar">›</div></div>'+
     '<div class="pf-mi danger" onclick="if(confirm(\'Выйти из аккаунта?\'))toast(\'Выход выполнен\')"><div class="ic">⏏</div><div class="lb">Выйти</div><div class="ar"></div></div>'+
@@ -1656,13 +1694,14 @@ function drawSvgMap(){
     var c=CATEGORIES[o.p.category];
     pins+='<g style="cursor:pointer" transform="translate('+o.x+','+o.y+')" onclick="openPlace(\''+o.p.id+'\')">'+
       '<circle r="18" fill="'+c.color+'" stroke="#fff" stroke-width="3"/>'+
-      '<text y="6" font-size="16" text-anchor="middle">'+c.icon+'</text>'+
+      '<text y="6" font-size="16" text-anchor="middle">'+svgIcon(c.icon)+'</text>'+
       '<g transform="translate(23,-10)"><rect rx="5" height="21" width="'+(10+o.p.name.length*6.1)+'" fill="rgba(255,255,255,.96)" stroke="rgba(13,77,53,.15)"/>'+
       '<text x="6" y="15" font-size="11.5" font-weight="700" fill="#1a2620">'+o.p.name+'</text></g></g>';
   });
 
   document.getElementById('mapBox').innerHTML=
-    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;background:#eef3f0">'+
+    '<div id="svgMapWrap"><div id="svgMapInner">'+
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" style="display:block;width:100%;height:100%;background:#eef3f0">'+
     '<rect width="'+W+'" height="'+H+'" fill="#eef3f0"/>'+
     '<circle cx="'+(W*0.16)+'" cy="'+(H*0.19)+'" r="85" fill="#dcebe2"/>'+
     '<circle cx="'+(W*0.84)+'" cy="'+(H*0.8)+'" r="100" fill="#dcebe2"/>'+
@@ -1672,7 +1711,95 @@ function drawSvgMap(){
     '<text y="9" font-size="24" text-anchor="middle" fill="#c9a44a">ﷲ</text>'+
     '<g transform="translate(0,-50)"><rect x="-58" rx="7" height="25" width="116" fill="#0d4d35"/>'+
     '<text y="17" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">'+(state.city==='Mecca'?'Аль-Харам':'ан-Набави')+'</text></g></g>'+
-    pins+'</svg>';
+    pins+'</svg>'+
+    '</div></div>';
+  initSvgZoom();
+}
+
+// ============================================
+// Зум/пан SVG-карты ВНУТРИ её области (не трогает макет)
+// scale ограничен; transform только на #svgMapInner;
+// overflow:hidden на обёртке держит всё в рамке #mapBox.
+// ============================================
+function initSvgZoom(){
+  var wrap=document.getElementById('svgMapWrap');
+  var inner=document.getElementById('svgMapInner');
+  if(!wrap||!inner) return;
+  var scale=1, tx=0, ty=0, MIN=1, MAX=4;
+  function clamp(){
+    var w=wrap.clientWidth, hgt=wrap.clientHeight;
+    var maxX=0, minX=w-w*scale;     // не даём белых полей
+    var maxY=0, minY=hgt-hgt*scale;
+    if(tx>maxX)tx=maxX; if(tx<minX)tx=minX;
+    if(ty>maxY)ty=maxY; if(ty<minY)ty=minY;
+    if(scale<=MIN){tx=0;ty=0;}
+  }
+  function apply(){ clamp(); inner.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
+
+  // Колесо мыши / трекпад — зум к курсору
+  wrap.addEventListener('wheel',function(e){
+    e.preventDefault();
+    var r=wrap.getBoundingClientRect();
+    var cx=e.clientX-r.left, cy=e.clientY-r.top;
+    var prev=scale;
+    scale*= (e.deltaY<0?1.15:0.87);
+    if(scale<MIN)scale=MIN; if(scale>MAX)scale=MAX;
+    var k=scale/prev;
+    tx=cx-(cx-tx)*k; ty=cy-(cy-ty)*k;
+    apply();
+  },{passive:false});
+
+  // Перетаскивание мышью
+  var drag=false,lx=0,ly=0;
+  wrap.addEventListener('mousedown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  window.addEventListener('mousemove',function(e){
+    if(!drag)return; tx+=e.clientX-lx; ty+=e.clientY-ly; lx=e.clientX; ly=e.clientY; apply();
+  });
+  window.addEventListener('mouseup',function(){drag=false;});
+
+  // Пинч-зум на тач-устройствах
+  var pts={}, pd=0, pcx=0, pcy=0;
+  wrap.addEventListener('touchstart',function(e){
+    for(var i=0;i<e.touches.length;i++){var t=e.touches[i];pts[t.identifier]={x:t.clientX,y:t.clientY};}
+    if(e.touches.length===2){
+      var a=e.touches[0],b=e.touches[1];
+      pd=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      var r=wrap.getBoundingClientRect();
+      pcx=((a.clientX+b.clientX)/2)-r.left; pcy=((a.clientY+b.clientY)/2)-r.top;
+    }
+  },{passive:true});
+  wrap.addEventListener('touchmove',function(e){
+    if(e.touches.length===2){
+      e.preventDefault();
+      var a=e.touches[0],b=e.touches[1];
+      var nd=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      if(pd>0){
+        var prev=scale; scale*=nd/pd;
+        if(scale<MIN)scale=MIN; if(scale>MAX)scale=MAX;
+        var k=scale/prev;
+        tx=pcx-(pcx-tx)*k; ty=pcy-(pcy-ty)*k;
+        apply();
+      }
+      pd=nd;
+    } else if(e.touches.length===1 && scale>1){
+      e.preventDefault();
+      var t=e.touches[0], id=t.identifier, p=pts[id];
+      if(p){ tx+=t.clientX-p.x; ty+=t.clientY-p.y; apply(); }
+      pts[id]={x:t.clientX,y:t.clientY};
+    }
+  },{passive:false});
+  wrap.addEventListener('touchend',function(e){
+    pd=0; pts={};
+    for(var i=0;i<e.touches.length;i++){var t=e.touches[i];pts[t.identifier]={x:t.clientX,y:t.clientY};}
+  },{passive:true});
+
+  // Двойной тап/клик — приблизить
+  wrap.addEventListener('dblclick',function(e){
+    var r=wrap.getBoundingClientRect();
+    var cx=e.clientX-r.left, cy=e.clientY-r.top;
+    var prev=scale; scale=(scale<2?Math.min(scale*1.8,MAX):MIN);
+    var k=scale/prev; tx=cx-(cx-tx)*k; ty=cy-(cy-ty)*k; apply();
+  });
 }
 
 // Wait for Leaflet to actually finish loading before deciding.
