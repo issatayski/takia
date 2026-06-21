@@ -1561,8 +1561,12 @@ function filteredPlaces(){
 function initMap(){
   var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
   lmap=L.map('leafletMap',{zoomControl:true,attributionControl:true,scrollWheelZoom:true,touchZoom:true,doubleClickZoom:true,bounceAtZoomLimits:false}).setView([ref.lat,ref.lng],16);
-  var tiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-    maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'
+  var tiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',{
+    maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO',
+    detectRetina:false,        // без @2x — убирает частичную загрузку ретина-тайлов
+    updateWhenIdle:false,      // грузить тайлы сразу, не дожидаясь остановки
+    updateWhenZooming:true,
+    keepBuffer:6               // держать большой буфер тайлов вокруг видимой области
   });
   // Если тайлы CARTO не грузятся (много ошибок) — переключаемся на прямой OSM
   var tileErrors=0;
@@ -1594,8 +1598,15 @@ function initMap(){
   function ensureSized(refit){
     if(!lmap) return;
     lmap.invalidateSize(true);
-    if(tiles && tiles.redraw) tiles.redraw();   // догрузить недостающие тайлы
-    if(refit) refitToPlaces();                  // пересчитать вид по точкам
+    if(refit){ refitToPlaces(); }
+    // Принудительно заставить Leaflet перезапросить ВСЕ тайлы видимой области:
+    // микро-сдвиг центра туда-обратно надёжнее, чем redraw().
+    try{
+      var c=lmap.getCenter();
+      lmap.panBy([1,1],{animate:false});
+      lmap.panBy([-1,-1],{animate:false});
+      if(tiles && tiles.redraw) tiles.redraw();
+    }catch(e){}
   }
   // первичные пересчёты с нарастающей задержкой
   requestAnimationFrame(function(){ensureSized(false);});
