@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Takia — Цифровой спутник паломника</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.css"
-      onerror="this.onerror=null;this.href='https://unpkg.com/[email protected]/dist/leaflet.css'">
+<!-- Leaflet CSS грузится динамически вместе с JS (см. загрузчик ниже) -->
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
@@ -271,10 +270,6 @@
   /* Карта: зум-изоляция только для SVG-заглушки, НЕ для Leaflet
      (contain/touch-action на Leaflet ломали отрисовку тайлов) */
   #mapBox{overflow:hidden}
-  /* SVG-схема (фоллбэк): зум/пан только внутри рамки */
-  #svgMapWrap{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab}
-  #svgMapWrap:active{cursor:grabbing}
-  #svgMapInner{transform-origin:0 0;will-change:transform}
 
   /* ===== Экран "О Takia" (история) ===== */
   #s-about{overflow-y:auto;background:#f3f6f4}
@@ -484,25 +479,35 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============ Leaflet loader: тройной CDN-fallback ============
-   Грузим Leaflet, пробуя источники по очереди. Если один CDN
-   недоступен/заблокирован — пробуем следующий. Только если все
-   три недоступны — приложение покажет SVG-заглушку (drawSvgMap).
-   Это убирает единственную точку отказа (раньше был один jsdelivr). */
+/* ============ Leaflet loader: CDN-fallback (CSS + JS вместе) ============
+   Грузим Leaflet, пробуя источники по очереди. cdnjs стоит ПЕРВЫМ —
+   он самый доступный (jsdelivr/unpkg в некоторых сетях не отвечают).
+   CSS грузится динамически вместе с JS от того же CDN — иначе стили
+   не приходят и тайлы позиционируются криво ("шахматка"). */
 (function(){
-  var SOURCES = [
-    'https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.js',
-    'https://unpkg.com/[email protected]/dist/leaflet.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
+  var CDNS = [
+    { css:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
+      js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js' },
+    { css:'https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.css',
+      js: 'https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.js' },
+    { css:'https://unpkg.com/[email protected]/dist/leaflet.css',
+      js: 'https://unpkg.com/[email protected]/dist/leaflet.js' }
   ];
   function tryLoad(i){
     if(typeof L!=='undefined') return;          // уже загрузился
-    if(i>=SOURCES.length) return;               // все источники не удались -> SVG fallback сработает сам
+    if(i>=CDNS.length) return;                  // все не удались -> waitLeaflet покажет сообщение
+    // CSS этого CDN
+    var link=document.createElement('link');
+    link.rel='stylesheet'; link.href=CDNS[i].css;
+    document.head.appendChild(link);
+    // JS этого CDN
     var s=document.createElement('script');
-    s.src=SOURCES[i];
-    s.async=false;
+    s.src=CDNS[i].js; s.async=false;
     s.onload=function(){ /* L готов; waitLeaflet ниже подхватит */ };
-    s.onerror=function(){ tryLoad(i+1); };       // этот CDN не отдал -> следующий
+    s.onerror=function(){
+      if(link.parentNode) link.parentNode.removeChild(link); // убрать битый CSS
+      tryLoad(i+1);                              // следующий CDN
+    };
     document.head.appendChild(s);
   }
   tryLoad(0);
@@ -1849,183 +1854,26 @@ function refreshMapListOnly(){
   renderRsList(places);
 }
 
-// Draw a clean static SVG map (used if Leaflet can't load for any reason)
-function drawSvgMap(){
-  var ref=state.city==='Mecca'?HARAM_MECCA:HARAM_MEDINA;
-  var places=filteredPlaces();
-  document.getElementById('rsCount').textContent=places.length+' '+decl(places.length);
-  renderRsList(places);
-
-  var pts=places.concat([{lat:ref.lat,lng:ref.lng}]);
-  var minLat=Math.min.apply(null,pts.map(function(p){return p.lat}));
-  var maxLat=Math.max.apply(null,pts.map(function(p){return p.lat}));
-  var minLng=Math.min.apply(null,pts.map(function(p){return p.lng}));
-  var maxLng=Math.max.apply(null,pts.map(function(p){return p.lng}));
-  var pLat=(maxLat-minLat)*0.28+0.0012, pLng=(maxLng-minLng)*0.28+0.0012;
-  minLat-=pLat;maxLat+=pLat;minLng-=pLng;maxLng+=pLng;
-  var W=1000,H=1000;
-  function X(l){return ((l-minLng)/(maxLng-minLng))*W}
-  function Y(l){return H-((l-minLat)/(maxLat-minLat))*H}
-  var hx=X(ref.lng),hy=Y(ref.lat);
-
-  var roads='';
-  for(var i=1;i<9;i++){
-    roads+='<line x1="'+(W/9*i)+'" y1="0" x2="'+(W/9*i)+'" y2="'+H+'" stroke="#dde6e1" stroke-width="'+(i%2?5:9)+'"/>';
-    roads+='<line x1="0" y1="'+(H/9*i)+'" x2="'+W+'" y2="'+(H/9*i)+'" stroke="#dde6e1" stroke-width="'+(i%2?5:9)+'"/>';
-  }
-  roads+='<circle cx="'+hx+'" cy="'+hy+'" r="130" fill="none" stroke="#d4ddd8" stroke-width="8"/>';
-  roads+='<circle cx="'+hx+'" cy="'+hy+'" r="250" fill="none" stroke="#d4ddd8" stroke-width="6"/>';
-  for(var a=0;a<360;a+=45){
-    var r=a*Math.PI/180;
-    roads+='<line x1="'+hx+'" y1="'+hy+'" x2="'+(hx+Math.cos(r)*440)+'" y2="'+(hy+Math.sin(r)*440)+'" stroke="#dde6e1" stroke-width="6"/>';
-  }
-
-  // spread overlapping markers
-  var pos=places.map(function(p){return{p:p,x:X(p.lng),y:Y(p.lat)}});
-  var md=118;
-  for(var it=0;it<70;it++){
-    for(var a1=0;a1<pos.length;a1++)for(var b1=a1+1;b1<pos.length;b1++){
-      var A=pos[a1],B=pos[b1],dx=B.x-A.x,dy=B.y-A.y,d=Math.sqrt(dx*dx+dy*dy)||1;
-      if(d<md){var pu=(md-d)/2,ux=dx/d,uy=dy/d;A.x-=ux*pu;A.y-=uy*pu;B.x+=ux*pu;B.y+=uy*pu;}
-    }
-  }
-  pos.forEach(function(o){o.x=Math.max(40,Math.min(W-40,o.x));o.y=Math.max(40,Math.min(H-40,o.y));});
-
-  var pins='';
-  pos.forEach(function(o){
-    var c=CATEGORIES[o.p.category];
-    pins+='<g style="cursor:pointer" transform="translate('+o.x+','+o.y+')" onclick="openPlace(\''+o.p.id+'\')">'+
-      '<circle r="18" fill="'+c.color+'" stroke="#fff" stroke-width="3"/>'+
-      '<text y="6" font-size="16" text-anchor="middle">'+svgIcon(c.icon)+'</text>'+
-      '<g transform="translate(23,-10)"><rect rx="5" height="21" width="'+(10+o.p.name.length*6.1)+'" fill="rgba(255,255,255,.96)" stroke="rgba(13,77,53,.15)"/>'+
-      '<text x="6" y="15" font-size="11.5" font-weight="700" fill="#1a2620">'+o.p.name+'</text></g></g>';
-  });
-
-  document.getElementById('mapBox').innerHTML=
-    '<div id="svgMapWrap"><div id="svgMapInner">'+
-    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" style="display:block;width:100%;height:100%;background:#eef3f0">'+
-    '<rect width="'+W+'" height="'+H+'" fill="#eef3f0"/>'+
-    '<circle cx="'+(W*0.16)+'" cy="'+(H*0.19)+'" r="85" fill="#dcebe2"/>'+
-    '<circle cx="'+(W*0.84)+'" cy="'+(H*0.8)+'" r="100" fill="#dcebe2"/>'+
-    roads+
-    '<g transform="translate('+hx+','+hy+')">'+
-    '<circle r="32" fill="#0d4d35" stroke="#c9a44a" stroke-width="4"/>'+
-    '<text y="9" font-size="24" text-anchor="middle" fill="#c9a44a">ﷲ</text>'+
-    '<g transform="translate(0,-50)"><rect x="-58" rx="7" height="25" width="116" fill="#0d4d35"/>'+
-    '<text y="17" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">'+(state.city==='Mecca'?'Аль-Харам':'ан-Набави')+'</text></g></g>'+
-    pins+'</svg>'+
-    '</div></div>';
-  initSvgZoom();
-}
-
-// ============================================
-// Зум/пан SVG-карты ВНУТРИ её области (не трогает макет)
-// scale ограничен; transform только на #svgMapInner;
-// overflow:hidden на обёртке держит всё в рамке #mapBox.
-// ============================================
-function initSvgZoom(){
-  var wrap=document.getElementById('svgMapWrap');
-  var inner=document.getElementById('svgMapInner');
-  if(!wrap||!inner) return;
-  var scale=1, tx=0, ty=0, MIN=1, MAX=4;
-  function clamp(){
-    var w=wrap.clientWidth, hgt=wrap.clientHeight;
-    var maxX=0, minX=w-w*scale;     // не даём белых полей
-    var maxY=0, minY=hgt-hgt*scale;
-    if(tx>maxX)tx=maxX; if(tx<minX)tx=minX;
-    if(ty>maxY)ty=maxY; if(ty<minY)ty=minY;
-    if(scale<=MIN){tx=0;ty=0;}
-  }
-  function apply(){ clamp(); inner.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
-
-  // Колесо мыши / трекпад — зум к курсору
-  wrap.addEventListener('wheel',function(e){
-    e.preventDefault();
-    var r=wrap.getBoundingClientRect();
-    var cx=e.clientX-r.left, cy=e.clientY-r.top;
-    var prev=scale;
-    scale*= (e.deltaY<0?1.15:0.87);
-    if(scale<MIN)scale=MIN; if(scale>MAX)scale=MAX;
-    var k=scale/prev;
-    tx=cx-(cx-tx)*k; ty=cy-(cy-ty)*k;
-    apply();
-  },{passive:false});
-
-  // Перетаскивание мышью
-  var drag=false,lx=0,ly=0;
-  wrap.addEventListener('mousedown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
-  window.addEventListener('mousemove',function(e){
-    if(!drag)return; tx+=e.clientX-lx; ty+=e.clientY-ly; lx=e.clientX; ly=e.clientY; apply();
-  });
-  window.addEventListener('mouseup',function(){drag=false;});
-
-  // Пинч-зум на тач-устройствах
-  var pts={}, pd=0, pcx=0, pcy=0;
-  wrap.addEventListener('touchstart',function(e){
-    for(var i=0;i<e.touches.length;i++){var t=e.touches[i];pts[t.identifier]={x:t.clientX,y:t.clientY};}
-    if(e.touches.length===2){
-      var a=e.touches[0],b=e.touches[1];
-      pd=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-      var r=wrap.getBoundingClientRect();
-      pcx=((a.clientX+b.clientX)/2)-r.left; pcy=((a.clientY+b.clientY)/2)-r.top;
-    }
-  },{passive:true});
-  wrap.addEventListener('touchmove',function(e){
-    if(e.touches.length===2){
-      e.preventDefault();
-      var a=e.touches[0],b=e.touches[1];
-      var nd=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-      if(pd>0){
-        var prev=scale; scale*=nd/pd;
-        if(scale<MIN)scale=MIN; if(scale>MAX)scale=MAX;
-        var k=scale/prev;
-        tx=pcx-(pcx-tx)*k; ty=pcy-(pcy-ty)*k;
-        apply();
-      }
-      pd=nd;
-    } else if(e.touches.length===1 && scale>1){
-      e.preventDefault();
-      var t=e.touches[0], id=t.identifier, p=pts[id];
-      if(p){ tx+=t.clientX-p.x; ty+=t.clientY-p.y; apply(); }
-      pts[id]={x:t.clientX,y:t.clientY};
-    }
-  },{passive:false});
-  wrap.addEventListener('touchend',function(e){
-    pd=0; pts={};
-    for(var i=0;i<e.touches.length;i++){var t=e.touches[i];pts[t.identifier]={x:t.clientX,y:t.clientY};}
-  },{passive:true});
-
-  // Двойной тап/клик — приблизить
-  wrap.addEventListener('dblclick',function(e){
-    var r=wrap.getBoundingClientRect();
-    var cx=e.clientX-r.left, cy=e.clientY-r.top;
-    var prev=scale; scale=(scale<2?Math.min(scale*1.8,MAX):MIN);
-    var k=scale/prev; tx=cx-(cx-tx)*k; ty=cy-(cy-ty)*k; apply();
-  });
-}
-
 // Wait for Leaflet to actually finish loading before deciding.
 // The Leaflet <script> tag may not be done when this code runs.
 (function waitLeaflet(tries){
-  if(typeof L!=='undefined'){          // Leaflet ready -> real interactive map
+  if(typeof L!=='undefined'){          // Leaflet готов -> настоящая карта
     initMap();
     return;
   }
-  if(tries<=0){                        // Gave up -> static SVG map (still looks like a map)
-    drawSvgMap();
+  if(tries<=0){                        // не загрузилось -> сообщение + кнопка повтора
+    var box=document.getElementById('mapBox');
+    if(box){
+      box.innerHTML='<div style="position:absolute;inset:0;display:flex;flex-direction:column;'+
+        'align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center;color:#5a6b63">'+
+        '<div style="font-size:14px">Карта не загрузилась.<br>Проверьте интернет.</div>'+
+        '<button onclick="location.reload()" style="background:#0d4d35;color:#fff;border:none;'+
+        'padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600">Повторить</button></div>';
+    }
     return;
   }
-  setTimeout(function(){waitLeaflet(tries-1)},150);   // check again in 150ms
-})(80);  // up to ~12 сек ожидания — даём время перебрать 3 CDN по очереди
-
-// Also re-render SVG fallback when filters change (if in fallback mode)
-var _origRefresh=refreshMap;
-refreshMap=function(){
-  if(typeof L!=='undefined'&&lmap){_origRefresh();}
-  else{drawSvgMap();}
-};
-
-
+  setTimeout(function(){waitLeaflet(tries-1)},150);   // проверяем снова через 150мс
+})(80);  // до ~12 сек — время перебрать 3 CDN по очереди
 
 </script>
 </body>
