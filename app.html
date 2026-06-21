@@ -2,457 +2,193 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Takia — Карта Мекки</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/[email protected]/dist/leaflet.css" />
-<link rel="stylesheet" href="assets/styles.css">
-<style>
-  #map { z-index: 1; }
-  .leaflet-popup-content-wrapper {
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  }
-  .leaflet-popup-content {
-    margin: 14px 16px;
-    min-width: 200px;
-  }
-  .popup-card .name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--green-deep);
-    margin-bottom: 4px;
-  }
-  .popup-card .meta {
-    font-size: 12px;
-    color: var(--ink-mute);
-    margin-bottom: 8px;
-  }
-  .popup-card .rating { color: var(--gold); font-weight: 700; }
-  .popup-card .btn-mini {
-    display: inline-block;
-    background: var(--green-deep);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    cursor: pointer;
-    width: 100%;
-    border: none;
-    font-family: inherit;
-  }
-  .map-search {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 500;
-    background: white;
-    padding: 10px 14px;
-    border-radius: 24px;
-    box-shadow: var(--shadow-md);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: calc(100% - 100px);
-    max-width: 360px;
-  }
-  .map-search input {
-    border: none;
-    outline: none;
-    flex: 1;
-    font-size: 14px;
-    font-family: inherit;
-    color: var(--ink);
-    background: transparent;
-  }
-  .map-search .search-icon { color: var(--ink-mute); font-size: 16px; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takia — тест карты (Исправленный)</title>
 
-  /* 2GIS-style place labels on map */
-  .leaflet-tooltip.place-label {
-    background: rgba(255,255,255,0.95);
-    border: none;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(13,77,53,0.18);
-    color: var(--ink);
-    font-family: 'Manrope', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    white-space: nowrap;
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; font-family:-apple-system,Roboto,sans-serif; }
+  body { display:flex; flex-direction:column; background:#f3f6f4; }
+
+  .head {
+    padding:14px 16px; background:#0d4d35; color:#fff;
+    font-size:17px; font-weight:700; flex:0 0 auto;
   }
-  .leaflet-tooltip.place-label::before { display: none; }
-  .leaflet-tooltip.haram-label {
-    background: var(--green-deep);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(13,77,53,0.3);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px;
-    font-weight: 700;
-    padding: 5px 12px;
-    white-space: nowrap;
+  .head small { display:block; font-weight:400; font-size:12px; opacity:.8; margin-top:2px; }
+
+  #map {
+    width:100%;
+    height:60vh;
+    flex:0 0 auto;
+    background:#dfe7e3;
   }
-  .leaflet-tooltip.haram-label::before { display: none; }
-  /* Hide labels at low zoom to avoid clutter — handled by JS too */
-  .leaflet-marker-icon { transition: transform 0.15s ease; }
-  /* Smoother map background while tiles load */
-  .leaflet-container { background: #eef2f0; }
+
+  .status {
+    padding:10px 16px; font-size:13px; color:#4a5750;
+    background:#fff; border-top:1px solid #e0e8e3; flex:0 0 auto;
+  }
+  .status b { color:#0d4d35; }
+  .log {
+    flex:1 1 auto; overflow-y:auto; padding:10px 16px;
+    font-family:monospace; font-size:11px; line-height:1.5; color:#5a6b63;
+    background:#fff;
+  }
+  .log div { padding:2px 0; border-bottom:1px solid #f0f3f1; }
+  .ok { color:#166548; } .err { color:#c0392b; } .warn { color:#c75500; }
 </style>
 </head>
 <body>
 
-<!-- APP HEADER -->
-<header class="app-header">
-  <a href="index.html" class="app-logo">
-    <div class="app-logo-mark">ﷲ</div>
-    Takia
-  </a>
-  <a href="favorites.html" class="user-chip">
-    <div class="user-avatar" id="userInitial">А</div>
-    <span id="userName">Айгуль</span>
-    <span class="premium-badge">★ Pro</span>
-  </a>
-</header>
-
-<!-- WELCOME (only shown to users) -->
-<div class="welcome-bar">
-  <div class="welcome-eyebrow" id="welcomeArea">Мекка · Азизия</div>
-  <div class="welcome-title">Ас-саляму алейкум, <span id="welcomeName">Айгуль</span>!</div>
-  <div class="welcome-sub" id="welcomeSub">Рядом с Харамом — все, что вам может понадобиться</div>
-  <div class="trip-card">
-    <div class="trip-info">
-      Ваша поездка: <strong>Умра</strong><br>
-      Дата вылета: <strong>15 июня 2026</strong>
-    </div>
-    <div style="text-align: right;">
-      <div class="trip-countdown" id="tripDays">30</div>
-      <div class="trip-countdown-lbl">дней</div>
-    </div>
-  </div>
+<div class="head">
+  Takia — изолированный тест карты
+  <small>Исправлена синхронная загрузка CSS и JS с рабочих CDN.</small>
 </div>
 
-<!-- CITY SELECTOR + CATEGORY FILTERS -->
-<div class="filters-bar" id="filtersBar">
-  <div class="filter-chip active" data-cat="all">
-    <span>📍</span> Все
-  </div>
-  <div class="filter-chip" data-cat="food">
-    <span class="chip-dot" style="background:#e85a4f"></span> Еда
-  </div>
-  <div class="filter-chip" data-cat="shop">
-    <span class="chip-dot" style="background:#ff9f43"></span> Магазины
-  </div>
-  <div class="filter-chip" data-cat="pharmacy">
-    <span class="chip-dot" style="background:#5b9bf2"></span> Аптеки
-  </div>
-  <div class="filter-chip" data-cat="money">
-    <span class="chip-dot" style="background:#8e74e8"></span> Обмен
-  </div>
-  <div class="filter-chip" data-cat="prayer">
-    <span class="chip-dot" style="background:#4ecdc4"></span> Намаз
-  </div>
-  <div class="filter-chip" data-cat="medical">
-    <span class="chip-dot" style="background:#5b9bf2"></span> Медицина
-  </div>
-  <div class="filter-chip" data-cat="transport">
-    <span class="chip-dot" style="background:#a89888"></span> Транспорт
-  </div>
-</div>
+<div id="map"></div>
 
-<!-- CUISINE FILTERS (hidden by default) -->
-<div class="cuisine-filters" id="cuisineFilters" style="display:none;">
-  <div class="cuisine-chip active" data-cuisine="all">Все кухни</div>
-  <div class="cuisine-chip" data-cuisine="Казахская">🇰🇿 Казахская</div>
-  <div class="cuisine-chip" data-cuisine="Узбекская">🇺🇿 Узбекская</div>
-  <div class="cuisine-chip" data-cuisine="Турецкая">🇹🇷 Турецкая</div>
-  <div class="cuisine-chip" data-cuisine="Индийская">🇮🇳 Индийская</div>
-  <div class="cuisine-chip" data-cuisine="Пакистанская">🇵🇰 Пакистанская</div>
-  <div class="cuisine-chip" data-cuisine="Арабская">🇸🇦 Арабская</div>
-</div>
+<div class="status" id="status">Подключение к CDN и загрузка Leaflet…</div>
+<div class="log" id="log"></div>
 
-<!-- MAP -->
-<div id="map-container">
-  <div id="map"></div>
-  <div class="map-search">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Найти место...">
-  </div>
-  <div class="map-overlay results-counter" id="resultsCounter">
-    Загрузка...
-  </div>
-</div>
-
-<!-- PLACE LIST -->
-<div class="place-list">
-  <div class="list-title">
-    <h3>Рядом · по расстоянию</h3>
-    <span class="count" id="listCount">0 мест</span>
-  </div>
-  <div id="placesList"></div>
-</div>
-
-<!-- TAB BAR -->
-<nav class="tab-bar">
-  <a href="app.html" class="tab active">
-    <div class="tab-icon">🗺</div>
-    Карта
-  </a>
-  <a href="guides.html" class="tab">
-    <div class="tab-icon">📖</div>
-    Обряды
-  </a>
-  <a href="offline.html" class="tab">
-    <div class="tab-icon">📡</div>
-    Офлайн
-  </a>
-  <a href="favorites.html" class="tab">
-    <div class="tab-icon">⭐</div>
-    Избранное
-  </a>
-</nav>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<script src="https://unpkg.com/[email protected]/dist/leaflet.js"></script>
-<script src="assets/data.js"></script>
 <script>
-  // Initial state
-  let currentCity = 'Mecca';
-  let activeCategory = 'all';
-  let activeCuisine = 'all';
-  let markers = [];
-  let map;
-
-  // Initialize map
-  function initMap() {
-    const center = currentCity === 'Mecca' ? [21.4225, 39.8262] : [24.4672, 39.6112];
-    map = L.map('map', {
-      zoomControl: false,
-      scrollWheelZoom: true,
-      zoomSnap: 0.5
-    }).setView(center, 16);
-
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    // CARTO Voyager — colorful, detailed streets and POI like 2GIS / modern maps
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
-      subdomains: 'abcd',
-      attribution: '© OpenStreetMap, © CARTO'
-    }).addTo(map);
-
-    // Hide place labels when zoomed out (like 2GIS) to avoid clutter
-    map.on('zoomend', function() {
-      const showLabels = map.getZoom() >= 15;
-      document.querySelectorAll('.leaflet-tooltip.place-label').forEach(function(el) {
-        el.style.display = showLabels ? '' : 'none';
-      });
-    });
-
-    addKaabaMarker();
-    renderPlaces();
-  }
-
-  function addKaabaMarker() {
-    const point = currentCity === 'Mecca' ? HARAM_MECCA : HARAM_MEDINA;
-    const icon = L.divIcon({
-      className: '',
-      html: `<div class="marker-kaaba">ﷲ</div>`,
-      iconSize: [50, 50],
-      iconAnchor: [25, 25]
-    });
-    L.marker([point.lat, point.lng], { icon, zIndexOffset: 1000 })
-      .addTo(map)
-      .bindTooltip(point.name, { permanent: true, direction: 'top', offset: [0, -28], className: 'haram-label' })
-      .bindPopup(`<div class="popup-card"><div class="name">${point.name}</div><div class="meta">Главная святыня</div></div>`);
-  }
-
-  function clearMarkers() {
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-  }
-
-  function getFilteredPlaces() {
-    let places = PLACES.filter(p => p.city === currentCity);
-    if (activeCategory !== 'all') {
-      places = places.filter(p => p.category === activeCategory);
+(function(){
+  // Список CDN. Первым поставлен Cloudflare, так как он гарантированно доступен у вас
+  var CDNS = [
+    {
+      name: 'cdnjs.cloudflare.com',
+      css: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
+      js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
+    },
+    {
+      name: 'cdn.jsdelivr.net',
+      css: 'https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.css',
+      js: 'https://cdn.jsdelivr.net/npm/[email protected]/dist/leaflet.js'
+    },
+    {
+      name: 'unpkg.com',
+      css: 'https://unpkg.com/[email protected]/dist/leaflet.css',
+      js: 'https://unpkg.com/[email protected]/dist/leaflet.js'
     }
-    if (activeCategory === 'food' && activeCuisine !== 'all') {
-      places = places.filter(p => p.cuisine === activeCuisine);
+  ];
+
+  function log(msg, cls){
+    var el = document.getElementById('log');
+    if(!el) return;
+    var d = document.createElement('div');
+    d.className = cls || ''; d.textContent = '• ' + msg;
+    el.appendChild(d);
+  }
+  window._log = log;
+
+  function tryLoad(i){
+    if(typeof L !== 'undefined'){ return; }
+    if(i >= CDNS.length){ 
+      log('Все источники недоступны — Leaflet не загрузился', 'err');
+      document.getElementById('status').innerHTML = '<b style="color:#c0392b">Leaflet не загрузился.</b> Проблема в блокировке сетей.';
+      return; 
     }
-    return places.sort((a, b) => a.distanceFromHaram - b.distanceFromHaram);
+    
+    log('Пробую CDN ' + (i + 1) + ': ' + CDNS[i].name);
+
+    // 1. Динамически загружаем стили (CSS) для текущего CDN
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = CDNS[i].css;
+    document.head.appendChild(link);
+
+    // 2. Динамически загружаем скрипт (JS)
+    var s = document.createElement('script');
+    s.src = CDNS[i].js;
+    s.async = false;
+    
+    s.onload = function(){ 
+      log('CDN ' + (i + 1) + ' (JS и CSS) успешно подключен ✓', 'ok'); 
+      start(); 
+    };
+    
+    s.onerror = function(){ 
+      log('CDN ' + (i + 1) + ' не ответил, удаляю битые стили...', 'warn'); 
+      if(link.parentNode) link.parentNode.removeChild(link); // Удаляем нерабочий CSS
+      tryLoad(i + 1); // Переходим к следующему CDN
+    };
+    
+    document.head.appendChild(s);
   }
+  
+  tryLoad(0);
+})();
+</script>
 
-  function renderPlaces() {
-    clearMarkers();
-    const places = getFilteredPlaces();
+<script>
+// ===== НАШИ ТОЧКИ (демо, координаты примерные, район Харама) =====
+var HARAM = { lat:21.4225, lng:39.8262, name:'Аль-Харам' };
+var POINTS = [
+  { name:'Restoran Almaty',        lat:21.4203, lng:39.8267, cat:'Еда',     color:'#e85a4f' },
+  { name:'Al-Baik',                lat:21.4218, lng:39.8240, cat:'Фастфуд',  color:'#e85a4f' },
+  { name:'Souvenirs Al-Haram',     lat:21.4231, lng:39.8255, cat:'Магазин',  color:'#ff9f43' },
+  { name:'Ihram Store Al-Aziziyah',lat:21.4189, lng:39.8301, cat:'Магазин',  color:'#ff9f43' },
+  { name:'Al-Shifa Pharmacy',      lat:21.4240, lng:39.8248, cat:'Аптека',   color:'#5b9bf2' },
+  { name:'Nahdi Pharmacy',         lat:21.4196, lng:39.8283, cat:'Аптека',   color:'#5b9bf2' },
+  { name:'Al-Rajhi Bank Exchange', lat:21.4212, lng:39.8290, cat:'Обмен',    color:'#8e74e8' },
+  { name:'Enjaz Exchange',         lat:21.4178, lng:39.8275, cat:'Обмен',    color:'#8e74e8' },
+  { name:'Mosque Al-Rajhi',        lat:21.4250, lng:39.8233, cat:'Намаз',    color:'#4ecdc4' },
+  { name:'Hera Polyclinic',        lat:21.4228, lng:39.8295, cat:'Медицина', color:'#5b9bf2' }
+];
 
-    // Update counter
-    document.getElementById('resultsCounter').textContent =
-      places.length === 0 ? 'Ничего не найдено' :
-      `${places.length} ${declensionPlaces(places.length)} найдено`;
-    document.getElementById('listCount').textContent =
-      `${places.length} ${declensionPlaces(places.length)}`;
+var map, started=false;
 
-    // Add markers
-    places.forEach(place => {
-      const cat = CATEGORIES[place.category];
-      const icon = L.divIcon({
-        className: '',
-        html: `<div class="marker-pin" style="background:${cat.color}">${cat.icon}</div>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
-      });
-      const marker = L.marker([place.lat, place.lng], { icon })
-        .addTo(map)
-        .bindTooltip(place.name, { permanent: true, direction: 'right', offset: [16, 0], className: 'place-label' })
-        .bindPopup(`
-          <div class="popup-card">
-            <div class="name">${place.name}</div>
-            <div class="meta">
-              <span class="rating">★ ${place.rating}</span> · ${place.distanceFromHaram} м от ${currentCity === 'Mecca' ? 'Каабы' : 'Набави'}
-              ${place.cuisine ? ' · ' + place.cuisine : ''}
-            </div>
-            <button class="btn-mini" onclick="openPlace('${place.id}')">Подробнее →</button>
-          </div>
-        `);
-      markers.push(marker);
-    });
+function start(){
+  if(started) return; started=true;
+  var log = window._log;
+  var status = document.getElementById('status');
 
-    // Render list
-    renderList(places);
+  var mapEl = document.getElementById('map');
+  function setH(){
+    var h = Math.round(window.innerHeight * 0.60);
+    mapEl.style.height = h + 'px';
   }
+  setH();
 
-  function renderList(places) {
-    const list = document.getElementById('placesList');
-    if (places.length === 0) {
-      list.innerHTML = '<div style="text-align:center; padding:30px; color:var(--ink-mute);">Ничего не найдено в этой категории</div>';
-      return;
-    }
-    list.innerHTML = places.slice(0, 20).map(place => {
-      const cat = CATEGORIES[place.category];
-      return `
-        <div class="place-item" onclick="openPlace('${place.id}')">
-          <div class="place-icon" style="background:${cat.bgColor}; color:${cat.color}">${cat.icon}</div>
-          <div class="place-info">
-            <div class="place-name">${place.name}${isFavorite(place.id) ? ' ⭐' : ''}</div>
-            <div class="place-meta">
-              <span class="${place.openNow ? 'open' : 'closed'}">${place.openNow ? 'Открыто' : 'Закрыто'}</span>
-              <span class="dot-sep">·</span>
-              <span>★ ${place.rating}</span>
-              ${place.cuisine ? `<span class="dot-sep">·</span><span>${place.cuisine}</span>` : ''}
-              ${place.priceLevel ? `<span class="dot-sep">·</span><span>${getCurrencyLabel(place.priceLevel)}</span>` : ''}
-            </div>
-          </div>
-          <div class="place-distance">
-            <div class="num">${place.distanceFromHaram < 1000 ? place.distanceFromHaram : (place.distanceFromHaram/1000).toFixed(1)}</div>
-            <div class="lbl">${place.distanceFromHaram < 1000 ? 'метров' : 'км'}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
+  log('Инициализация карты…');
+  map = L.map('map', { zoomControl:true }).setView([HARAM.lat, HARAM.lng], 15);
 
-  function declensionPlaces(n) {
-    const n10 = n % 10, n100 = n % 100;
-    if (n100 >= 11 && n100 <= 14) return 'мест';
-    if (n10 === 1) return 'место';
-    if (n10 >= 2 && n10 <= 4) return 'места';
-    return 'мест';
-  }
-
-  function openPlace(id) {
-    window.location.href = `place.html?id=${id}`;
-  }
-
-  function showToast(message, type = '') {
-    const t = document.getElementById('toast');
-    t.textContent = message;
-    t.className = 'toast show ' + type;
-    setTimeout(() => t.classList.remove('show'), 2500);
-  }
-
-  // Category filter
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      activeCategory = chip.dataset.cat;
-
-      // Show cuisine filters for food
-      const cuisineBar = document.getElementById('cuisineFilters');
-      if (activeCategory === 'food') {
-        cuisineBar.style.display = 'flex';
-        activeCuisine = 'all';
-        document.querySelectorAll('.cuisine-chip').forEach(c => c.classList.remove('active'));
-        document.querySelector('.cuisine-chip[data-cuisine="all"]').classList.add('active');
-      } else {
-        cuisineBar.style.display = 'none';
-        activeCuisine = 'all';
-      }
-
-      renderPlaces();
-    });
+  var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap',
+    crossOrigin: true
   });
 
-  // Cuisine filter
-  document.querySelectorAll('.cuisine-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.cuisine-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      activeCuisine = chip.dataset.cuisine;
-      renderPlaces();
-    });
+  var loaded=0, errors=0;
+  tiles.on('tileload', function(){ loaded++; status.innerHTML='Тайлов загружено: <b>'+loaded+'</b>'+(errors?(' · ошибок: '+errors):''); });
+  tiles.on('tileerror', function(){ errors++; });
+  tiles.on('load', function(){ log('Все видимые тайлы успешно отрисованы ('+loaded+' шт) ✓','ok'); });
+
+  tiles.addTo(map);
+  log('Слой подложки OSM добавлен');
+
+  // Главный маркер Харама
+  L.marker([HARAM.lat, HARAM.lng]).addTo(map).bindPopup('<b>'+HARAM.name+'</b>');
+
+  // Отрисовка цветных точек
+  POINTS.forEach(function(p){
+    L.circleMarker([p.lat, p.lng], {
+      radius:9, color:'#fff', weight:2, fillColor:p.color, fillOpacity:1
+    }).addTo(map).bindPopup('<b>'+p.name+'</b><br>'+p.cat);
   });
+  log('Добавлено точек на карту: '+POINTS.length+' ✓','ok');
 
-  // Search input
-  document.getElementById('searchInput').addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase();
-    if (!q) {
-      renderPlaces();
-      return;
-    }
-    const filtered = PLACES.filter(p =>
-      p.city === currentCity &&
-      (p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-    );
-    clearMarkers();
-    filtered.forEach(place => {
-      const cat = CATEGORIES[place.category];
-      const icon = L.divIcon({
-        className: '',
-        html: `<div class="marker-pin" style="background:${cat.color}">${cat.icon}</div>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
-      });
-      const marker = L.marker([place.lat, place.lng], { icon })
-        .addTo(map)
-        .bindPopup(`<div class="popup-card"><div class="name">${place.name}</div><button class="btn-mini" onclick="openPlace('${place.id}')">Подробнее →</button></div>`);
-      markers.push(marker);
-    });
-    renderList(filtered);
-  });
+  // Автоматическое масштабирование под экран
+  var all = POINTS.map(function(p){return [p.lat,p.lng];});
+  all.push([HARAM.lat, HARAM.lng]);
+  map.fitBounds(all, { padding:[40,40], maxZoom:16 });
 
-  // Init user UI
-  document.getElementById('userInitial').textContent = CURRENT_USER.name[0];
-  document.getElementById('userName').textContent = CURRENT_USER.name;
-  document.getElementById('welcomeName').textContent = CURRENT_USER.name;
-  document.getElementById('tripDays').textContent = CURRENT_USER.trip.daysUntil;
-
-  // Init map
-  initMap();
-
-  // Show welcome toast if first visit
-  if (!sessionStorage.getItem('takia_welcomed')) {
-    setTimeout(() => showToast('Ас-саляму алейкум! Добро пожаловать в Takia ✨', 'success'), 500);
-    sessionStorage.setItem('takia_welcomed', '1');
+  // Коррекция отображения сетки
+  function fix(){ if(map){ map.invalidateSize(true); } }
+  setTimeout(fix, 100); setTimeout(fix, 400); setTimeout(fix, 1000);
+  window.addEventListener('resize', function(){ setH(); fix(); });
+  if(window.ResizeObserver){
+    new ResizeObserver(fix).observe(mapEl);
   }
+}
 </script>
 
 </body>
