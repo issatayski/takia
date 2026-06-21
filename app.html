@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Takia — тест карты (Исправленный)</title>
+<title>Takia — Карта с построением маршрута</title>
 
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -18,14 +18,63 @@
 
   #map {
     width:100%;
-    height:60vh;
+    height:55vh;
     flex:0 0 auto;
     background:#dfe7e3;
   }
 
+  /* Панель отображения текущего маршрута */
+  .route-panel {
+    display: none; /* включается только когда есть точки */
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid #e0e8e3;
+    border-bottom: 1px solid #e0e8e3;
+    font-size: 13px;
+    color: #2c3e50;
+    align-items: center;
+    justify-content: space-between;
+    flex:0 0 auto;
+  }
+  .route-text {
+    font-weight: 500;
+    line-height: 1.4;
+    padding-right: 10px;
+  }
+  .btn-clear {
+    padding: 6px 12px;
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .btn-clear:hover { background: #a93226; }
+
+  /* Стилизация кнопки внутри всплывающего окна карты */
+  .popup-btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #0d4d35;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    width: 100%;
+    text-align: center;
+  }
+  .popup-btn:hover { background: #083323; }
+
   .status {
     padding:10px 16px; font-size:13px; color:#4a5750;
-    background:#fff; border-top:1px solid #e0e8e3; flex:0 0 auto;
+    background:#fff; flex:0 0 auto;
   }
   .status b { color:#0d4d35; }
   .log {
@@ -40,18 +89,22 @@
 <body>
 
 <div class="head">
-  Takia — изолированный тест карты
-  <small>Исправлена синхронная загрузка CSS и JS с рабочих CDN.</small>
+  Takia — Интерактивный маршрутизатор
+  <small>Нажмите на точку и выберите «Добавить в маршрут» для построения пути.</small>
 </div>
 
 <div id="map"></div>
+
+<div class="route-panel" id="routePanel">
+  <div class="route-text" id="routePath">Маршрут: не задан</div>
+  <button class="btn-clear" onclick="window.clearRoute()">Сбросить путь</button>
+</div>
 
 <div class="status" id="status">Подключение к CDN и загрузка Leaflet…</div>
 <div class="log" id="log"></div>
 
 <script>
 (function(){
-  // Список CDN. Первым поставлен Cloudflare, так как он гарантированно доступен у вас
   var CDNS = [
     {
       name: 'cdnjs.cloudflare.com',
@@ -83,32 +136,30 @@
     if(typeof L !== 'undefined'){ return; }
     if(i >= CDNS.length){ 
       log('Все источники недоступны — Leaflet не загрузился', 'err');
-      document.getElementById('status').innerHTML = '<b style="color:#c0392b">Leaflet не загрузился.</b> Проблема в блокировке сетей.';
+      document.getElementById('status').innerHTML = '<b style="color:#c0392b">Leaflet не загрузился.</b>';
       return; 
     }
     
     log('Пробую CDN ' + (i + 1) + ': ' + CDNS[i].name);
 
-    // 1. Динамически загружаем стили (CSS) для текущего CDN
     var link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = CDNS[i].css;
     document.head.appendChild(link);
 
-    // 2. Динамически загружаем скрипт (JS)
     var s = document.createElement('script');
     s.src = CDNS[i].js;
     s.async = false;
     
     s.onload = function(){ 
-      log('CDN ' + (i + 1) + ' (JS и CSS) успешно подключен ✓', 'ok'); 
+      log('CDN ' + (i + 1) + ' успешно подключен ✓', 'ok'); 
       start(); 
     };
     
     s.onerror = function(){ 
-      log('CDN ' + (i + 1) + ' не ответил, удаляю битые стили...', 'warn'); 
-      if(link.parentNode) link.parentNode.removeChild(link); // Удаляем нерабочий CSS
-      tryLoad(i + 1); // Переходим к следующему CDN
+      log('CDN ' + (i + 1) + ' не ответил, пробую следующий...', 'warn'); 
+      if(link.parentNode) link.parentNode.removeChild(link);
+      tryLoad(i + 1);
     };
     
     document.head.appendChild(s);
@@ -119,7 +170,7 @@
 </script>
 
 <script>
-// ===== НАШИ ТОЧКИ (демо, координаты примерные, район Харама) =====
+// ===== НАШИ ТОЧКИ =====
 var HARAM = { lat:21.4225, lng:39.8262, name:'Аль-Харам' };
 var POINTS = [
   { name:'Restoran Almaty',        lat:21.4203, lng:39.8267, cat:'Еда',     color:'#e85a4f' },
@@ -134,7 +185,12 @@ var POINTS = [
   { name:'Hera Polyclinic',        lat:21.4228, lng:39.8295, cat:'Медицина', color:'#5b9bf2' }
 ];
 
-var map, started=false;
+var map, started = false;
+
+// Переменные для хранения данных пути
+var routePoints = []; // Сюда сохраняем координаты [lat, lng]
+var routeNames = [];  // Сюда сохраняем имена для текстовой панели
+var routePolyline = null; // Объект линии на карте
 
 function start(){
   if(started) return; started=true;
@@ -143,7 +199,7 @@ function start(){
 
   var mapEl = document.getElementById('map');
   function setH(){
-    var h = Math.round(window.innerHeight * 0.60);
+    var h = Math.round(window.innerHeight * 0.55);
     mapEl.style.height = h + 'px';
   }
   setH();
@@ -160,34 +216,88 @@ function start(){
   var loaded=0, errors=0;
   tiles.on('tileload', function(){ loaded++; status.innerHTML='Тайлов загружено: <b>'+loaded+'</b>'+(errors?(' · ошибок: '+errors):''); });
   tiles.on('tileerror', function(){ errors++; });
-  tiles.on('load', function(){ log('Все видимые тайлы успешно отрисованы ('+loaded+' шт) ✓','ok'); });
-
+  tiles.on('load', function(){ log('Все тайлы отрисованы ✓','ok'); });
   tiles.addTo(map);
-  log('Слой подложки OSM добавлен');
+
+  // Функция добавления точки в массив пути
+  window.addToRoute = function(lat, lng, name) {
+    routePoints.push([lat, lng]);
+    routeNames.push(name);
+
+    // Если линия уже создана — обновляем её координаты, если нет — создаем с нуля
+    if(routePolyline) {
+      routePolyline.setLatLngs(routePoints);
+    } else {
+      routePolyline = L.polyline(routePoints, {
+        color: '#2980b9',      // Синий цвет линии
+        weight: 5,             // Толщина линии
+        opacity: 0.85,         // Прозрачность
+        dashArray: '8, 8',     // Сделаем её пунктирной для красоты
+        lineJoin: 'round'
+      }).addTo(map);
+    }
+
+    // Обновляем текстовую панель под картой
+    document.getElementById('routePanel').style.display = 'flex';
+    document.getElementById('routePath').innerHTML = '<b>Путь:</b> ' + routeNames.join(' → ');
+    
+    // Закрываем балун после клика, чтобы не мешал обзору
+    map.closePopup();
+    log('В маршрут добавлено: ' + name, 'ok');
+  };
+
+  // Функция полной очистки пути
+  window.clearRoute = function() {
+    routePoints = [];
+    routeNames = [];
+    if(routePolyline) {
+      map.removeLayer(routePolyline);
+      routePolyline = null;
+    }
+    document.getElementById('routePanel').style.display = 'none';
+    log('Маршрут полностью сброшен');
+  };
+
+  // Создание содержимого балуна с кнопкой «Добавить в маршрут»
+  function createPopupContent(name, info, lat, lng) {
+    var container = document.createElement('div');
+    container.innerHTML = '<b>' + name + '</b>' + (info ? '<br>' + info : '');
+    
+    var btn = document.createElement('button');
+    btn.className = 'popup-btn';
+    btn.textContent = 'Добавить в маршрут';
+    btn.onclick = function() {
+      window.addToRoute(lat, lng, name);
+    };
+    
+    container.appendChild(btn);
+    return container;
+  }
 
   // Главный маркер Харама
-  L.marker([HARAM.lat, HARAM.lng]).addTo(map).bindPopup('<b>'+HARAM.name+'</b>');
+  var haramPopup = createPopupContent(HARAM.name, 'Главная мечеть', HARAM.lat, HARAM.lng);
+  L.marker([HARAM.lat, HARAM.lng]).addTo(map).bindPopup(haramPopup);
 
-  // Отрисовка цветных точек
+  // Отрисовка остальных цветных точек
   POINTS.forEach(function(p){
+    var pPopup = createPopupContent(p.name, p.cat, p.lat, p.lng);
     L.circleMarker([p.lat, p.lng], {
-      radius:9, color:'#fff', weight:2, fillColor:p.color, fillOpacity:1
-    }).addTo(map).bindPopup('<b>'+p.name+'</b><br>'+p.cat);
+      radius:10, color:'#fff', weight:2, fillColor:p.color, fillOpacity:1
+    }).addTo(map).bindPopup(pPopup);
   });
-  log('Добавлено точек на карту: '+POINTS.length+' ✓','ok');
+  
+  log('Добавлено точек на карту: ' + POINTS.length + ' ✓', 'ok');
 
-  // Автоматическое масштабирование под экран
+  // Автоматический фокус на все точки сразу
   var all = POINTS.map(function(p){return [p.lat,p.lng];});
   all.push([HARAM.lat, HARAM.lng]);
   map.fitBounds(all, { padding:[40,40], maxZoom:16 });
 
-  // Коррекция отображения сетки
+  // Исправление багов сетки при изменении размеров экрана
   function fix(){ if(map){ map.invalidateSize(true); } }
-  setTimeout(fix, 100); setTimeout(fix, 400); setTimeout(fix, 1000);
+  setTimeout(fix, 100); setTimeout(fix, 500);
   window.addEventListener('resize', function(){ setH(); fix(); });
-  if(window.ResizeObserver){
-    new ResizeObserver(fix).observe(mapEl);
-  }
+  if(window.ResizeObserver){ new ResizeObserver(fix).observe(mapEl); }
 }
 </script>
 
