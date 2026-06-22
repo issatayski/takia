@@ -334,6 +334,19 @@
   .hpl-h{ font-size:16px; font-weight:700; color:#0d4d35; margin-bottom:3px; }
   .hpl-d{ font-size:12px; color:#c9a44a; font-weight:600; margin-bottom:8px; }
   .hpl-t{ font-size:14px; line-height:1.6; color:#3a4742; }
+
+  /* Карусель фото в карточке точки */
+  .pd-hero{height:200px;position:relative;overflow:hidden;background:#0d4d35}
+  .ctrack{display:flex;height:100%;transition:transform .25s ease;touch-action:pan-y}
+  .cslide{min-width:100%;height:100%;background-size:cover;background-position:center;overflow:hidden}
+  .cslide svg{width:100%;height:100%;display:block}
+  .cdots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center;z-index:3}
+  .cdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55)}
+  .cdot.on{background:#fff;width:18px;border-radius:4px}
+  .cnav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;
+    background:rgba(0,0,0,.28);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:22px;z-index:3;cursor:pointer;user-select:none}
+  .cprev{left:10px} .cnext{right:10px}
 </style>
 </head>
 <body>
@@ -653,6 +666,95 @@ var ICONS = {
   profile:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'
 };
 function svgIcon(key){ return ICONS[key] || ICONS.shop; }
+
+// ============================================
+// Демо-фото для карточек точек (3 SVG-ракурса на категорию).
+// До появления реальных фото. Возвращает массив из 3 data-URI SVG.
+// ============================================
+function photoSet(cat){
+  function wrap(bg, inner){
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;display:block">'+
+      '<rect width="400" height="240" fill="'+bg+'"/>'+inner+'</svg>';
+  }
+  var sets={
+    food:[
+      wrap('#fde5d4','<circle cx="200" cy="130" r="62" fill="#fff" stroke="#e8a06a" stroke-width="6"/><circle cx="200" cy="130" r="40" fill="#e85a4f"/><path d="M150 60h12v50M156 60v50" stroke="#c2410c" stroke-width="5" stroke-linecap="round"/><path d="M244 60c-6 0-10 8-10 22s4 18 10 18v30" stroke="#c2410c" stroke-width="5" fill="none" stroke-linecap="round"/>'),
+      wrap('#0d4d35','<rect x="70" y="80" width="260" height="110" rx="10" fill="#166548"/><circle cx="130" cy="135" r="26" fill="#e8c777"/><circle cx="200" cy="135" r="26" fill="#f0d589"/><circle cx="270" cy="135" r="26" fill="#e8c777"/><text x="200" y="215" fill="#9bc4ad" font-family="sans-serif" font-size="16" text-anchor="middle">Зал заведения</text>'),
+      wrap('#fff4e6','<rect x="120" y="70" width="160" height="100" rx="8" fill="#ff9f43"/><rect x="140" y="90" width="120" height="12" rx="6" fill="#fff"/><rect x="140" y="115" width="90" height="12" rx="6" fill="#fff" opacity=".8"/><text x="200" y="200" fill="#c2410c" font-family="sans-serif" font-size="16" text-anchor="middle">Меню</text>')
+    ],
+    shop:[
+      wrap('#f3edff','<path d="M120 90h160l-12 100H132z" fill="#8e74e8"/><path d="M120 90l8-30h144l8 30" fill="none" stroke="#6b4fd8" stroke-width="6"/><path d="M165 120a35 35 0 0 0 70 0" fill="none" stroke="#fff" stroke-width="6"/>'),
+      wrap('#0d4d35','<rect x="90" y="70" width="220" height="120" rx="8" fill="#166548"/><rect x="110" y="90" width="80" height="80" rx="4" fill="#a78bfa"/><rect x="210" y="90" width="80" height="35" rx="4" fill="#e8c777"/><rect x="210" y="135" width="80" height="35" rx="4" fill="#f0d589"/>'),
+      wrap('#ede7ff','<rect x="130" y="80" width="140" height="90" rx="8" fill="#8e74e8"/><circle cx="200" cy="125" r="28" fill="#fff" opacity=".9"/><text x="200" y="205" fill="#6b4fd8" font-family="sans-serif" font-size="16" text-anchor="middle">Витрина</text>')
+    ],
+    pharmacy:[
+      wrap('#e3f0fd','<rect x="160" y="70" width="80" height="120" rx="10" fill="#5b9bf2"/><rect x="185" y="95" width="30" height="70" fill="#fff"/><rect x="170" y="115" width="60" height="30" fill="#fff"/>'),
+      wrap('#0d4d35','<rect x="90" y="75" width="220" height="110" rx="8" fill="#166548"/><rect x="115" y="95" width="50" height="70" rx="4" fill="#dbeafe"/><rect x="175" y="95" width="50" height="70" rx="4" fill="#93c5fd"/><rect x="235" y="95" width="50" height="70" rx="4" fill="#dbeafe"/>'),
+      wrap('#dbeafe','<circle cx="200" cy="120" r="45" fill="#5b9bf2"/><rect x="190" y="100" width="20" height="40" fill="#fff"/><rect x="180" y="110" width="40" height="20" fill="#fff"/><text x="200" y="200" fill="#2563eb" font-family="sans-serif" font-size="16" text-anchor="middle">24/7</text>')
+    ],
+    money:[
+      wrap('#efe9ff','<circle cx="200" cy="125" r="55" fill="#8e74e8"/><text x="200" y="148" fill="#fff" font-family="sans-serif" font-size="60" text-anchor="middle" font-weight="bold">₸</text>'),
+      wrap('#0d4d35','<rect x="100" y="85" width="200" height="90" rx="8" fill="#166548"/><circle cx="150" cy="130" r="22" fill="#e8c777"/><circle cx="200" cy="130" r="22" fill="#f0d589"/><circle cx="250" cy="130" r="22" fill="#e8c777"/><text x="200" y="130" fill="#0d4d35" font-family="sans-serif" font-size="20" text-anchor="middle" dy="7" font-weight="bold">$</text>')+'',
+      wrap('#e9e2fb','<rect x="120" y="95" width="160" height="50" rx="6" fill="#8e74e8"/><rect x="135" y="110" width="60" height="8" rx="4" fill="#fff"/><text x="200" y="190" fill="#6b4fd8" font-family="sans-serif" font-size="16" text-anchor="middle">Обмен валют</text>')
+    ],
+    prayer:[
+      wrap('#daf3ef','<path d="M120 190V120a80 80 0 0 1 160 0v70" fill="#4ecdc4"/><rect x="120" y="190h160" width="160" height="10" fill="#3aa89f"/><path d="M195 90v-12" stroke="#3aa89f" stroke-width="5"/>'),
+      wrap('#0d4d35','<path d="M130 185v-55a70 70 0 0 1 140 0v55" fill="#166548"/><path d="M170 185v-25a30 30 0 0 1 60 0v25" fill="#0a3a28"/><circle cx="200" cy="70" r="8" fill="#e8c777"/>'),
+      wrap('#d1f0eb','<rect x="110" y="100" width="180" height="90" rx="6" fill="#4ecdc4"/><path d="M150 190v-40a25 25 0 0 1 50 0v40M210 190v-40a25 25 0 0 1 50 0" fill="#fff" opacity=".5"/>')
+    ],
+    medical:[
+      wrap('#fde8e8','<rect x="150" y="80" width="100" height="100" rx="10" fill="#fff" stroke="#dc2626" stroke-width="5"/><rect x="190" y="100" width="20" height="60" fill="#dc2626"/><rect x="170" y="120" width="60" height="20" fill="#dc2626"/>'),
+      wrap('#0d4d35','<rect x="100" y="80" width="200" height="100" rx="8" fill="#166548"/><rect x="180" y="100" width="40" height="60" fill="#fff"/><rect x="160" y="120" width="80" height="20" fill="#fff"/>'),
+      wrap('#fee2e2','<circle cx="200" cy="125" r="48" fill="#dc2626"/><rect x="192" y="100" width="16" height="50" fill="#fff"/><rect x="175" y="117" width="50" height="16" fill="#fff"/>')
+    ],
+    transport:[
+      wrap('#e3edff','<rect x="110" y="80" width="180" height="90" rx="12" fill="#2563eb"/><rect x="125" y="95" width="150" height="40" rx="4" fill="#bfdbfe"/><circle cx="145" cy="175" r="14" fill="#1e3a8a"/><circle cx="255" cy="175" r="14" fill="#1e3a8a"/>'),
+      wrap('#0d4d35','<rect x="90" y="100" width="220" height="50" rx="6" fill="#166548"/><path d="M90 125h220" stroke="#e8c777" stroke-width="4"/><rect x="110" y="150" width="180" height="10" fill="#0a3a28"/><text x="200" y="190" fill="#9bc4ad" font-family="sans-serif" font-size="15" text-anchor="middle">Станция</text>'),
+      wrap('#dbeafe','<rect x="120" y="85" width="160" height="80" rx="10" fill="#2563eb"/><rect x="135" y="100" width="130" height="30" rx="3" fill="#fff" opacity=".8"/>')
+    ]
+  };
+  return sets[cat] || sets.shop;
+}
+
+// ============================================
+// Карусель фото в карточке точки (свайп влево/вправо)
+// ============================================
+function buildCarousel(p){
+  var hero=document.getElementById('pdHero');
+  if(!hero) return;
+  // источник фото: реальные (если будут) или демо по категории
+  var imgs = (p.photos && p.photos.length && p.photos[0] && p.photos[0].indexOf('/')>-1)
+    ? p.photos : photoSet(p.category);
+  var idx=0;
+  function render(){
+    var dots=imgs.map(function(_,k){return '<span class="cdot'+(k===idx?' on':'')+'"></span>';}).join('');
+    hero.innerHTML =
+      '<div class="ctrack">'+imgs.map(function(src){
+        return (src.indexOf('<svg')===0)
+          ? '<div class="cslide">'+src+'</div>'
+          : '<div class="cslide" style="background-image:url(\''+src+'\')"></div>';
+      }).join('')+'</div>'+
+      (imgs.length>1?'<div class="cdots">'+dots+'</div>':'')+
+      (imgs.length>1?'<div class="cnav cprev">‹</div><div class="cnav cnext">›</div>':'');
+    var track=hero.querySelector('.ctrack');
+    track.style.transform='translateX(-'+(idx*100)+'%)';
+    var prev=hero.querySelector('.cprev'), next=hero.querySelector('.cnext');
+    if(prev) prev.onclick=function(){ go_(-1); };
+    if(next) next.onclick=function(){ go_(1); };
+  }
+  function go_(d){ idx=(idx+d+imgs.length)%imgs.length; render(); }
+  render();
+  // свайп
+  var sx=0, sy=0, swiping=false;
+  hero.addEventListener('touchstart',function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; swiping=true; },{passive:true});
+  hero.addEventListener('touchend',function(e){
+    if(!swiping) return; swiping=false;
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){ go_(dx<0?1:-1); }
+  },{passive:true});
+}
+
+
 
 
 // Reference points
@@ -1817,7 +1919,7 @@ function openPlace(id){
   var p=getPlaceById(id);if(!p)return;
   var c=CATEGORIES[p.category];
   var html=
-    '<div class="pd-hero"><div class="em">'+(p.photos&&p.photos[0]?p.photos[0]:c.icon)+'</div></div>'+
+    '<div class="pd-hero" id="pdHero"></div>'+
     '<div class="pd-body">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'+
     '<div><h1 class="pd-name">'+p.name+'</h1>'+
@@ -1852,6 +1954,7 @@ function openPlace(id){
     })()+
     '</div>';
   document.getElementById('placeContent').innerHTML=html;
+  buildCarousel(p);
   go('place');
   setTimeout(function(){
     if(pdMiniMap){pdMiniMap.remove();pdMiniMap=null;}
