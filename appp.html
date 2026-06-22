@@ -314,6 +314,20 @@
   }
   .about-foot-mark{font-size:26px;color:#f0d589;margin-bottom:8px}
   .about-foot-txt{font-size:14px;line-height:1.6;opacity:0.92}
+
+  /* Переключатель городов — overlay ПОВЕРХ карты (не отнимает площадь) */
+  .city-switch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    z-index:1000; display:flex; gap:2px; padding:3px;
+    background:rgba(255,255,255,.95); border-radius:22px;
+    box-shadow:0 3px 12px rgba(13,77,53,.22); backdrop-filter:blur(4px);
+  }
+  .cs-btn{
+    border:none; background:transparent; padding:8px 20px; border-radius:18px;
+    font-size:14px; font-weight:700; color:#5a6b63; cursor:pointer;
+    font-family:inherit; transition:all .15s;
+  }
+  .cs-btn.active{ background:#0d4d35; color:#fff; }
 </style>
 </head>
 <body>
@@ -328,7 +342,7 @@
 <div class="screen active" id="s-map" data-tab="map">
   <div class="filters" id="filters"></div>
   <div class="cuisines" id="cuisines"></div>
-  <div id="mapBox"><div id="leafletMap"></div></div>
+  <div id="mapBox"><div id="leafletMap"></div><div class="city-switch" id="citySwitch"><button class="cs-btn active" data-city="Mecca" onclick="setCity('Mecca')">Мекка</button><button class="cs-btn" data-city="Medina" onclick="setCity('Medina')">Медина</button></div></div>
   <div class="rs-head">
     <span class="t">Рядом · по расстоянию</span>
     <span class="c" id="rsCount">—</span>
@@ -559,7 +573,7 @@ function svgIcon(key){ return ICONS[key] || ICONS.shop; }
 
 // Reference points
 const HARAM_MECCA = { lat: 21.4225, lng: 39.8262, name: 'Масджид аль-Харам' };
-const HARAM_MEDINA = { lat: 24.4672, lng: 39.6112, name: 'Масджид ан-Набави' };
+const HARAM_MEDINA = { lat: 24.4670, lng: 39.6109, name: 'Масджид ан-Набави' };
 
 // ============================================
 // PLACES — Real data with verified coordinates
@@ -1636,6 +1650,28 @@ function initMap(){
 
 function clearMarkers(){lmarkers.forEach(function(m){lmap.removeLayer(m)});lmarkers=[]}
 
+function setCity(city){
+  if(state.city===city) return;
+  state.city = city;
+  // Подсветить активную кнопку
+  document.querySelectorAll('.cs-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-city')===city);
+  });
+  // Сбросить фильтры категории (у городов разный набор точек)
+  state.cat='all'; state.cuisine='all';
+  buildFilters();
+  // Перецентровать карту на опорную точку нового города и перерисовать точки
+  if(lmap){
+    var ref = city==='Mecca' ? HARAM_MECCA : HARAM_MEDINA;
+    lmap.setView([ref.lat, ref.lng], 15);
+    refreshMap();
+    setTimeout(function(){ if(window._takiaEnsureSized) window._takiaEnsureSized(true); }, 60);
+  } else {
+    refreshMap();
+  }
+  toast(city==='Mecca' ? 'Мекка' : 'Медина');
+}
+
 function refitToPlaces(){
   if(!lmap) return;
   var places=filteredPlaces();
@@ -1862,7 +1898,7 @@ function refreshMapListOnly(){
     return;
   }
   if(tries<=0){                        // не загрузилось -> сообщение + кнопка повтора
-    var box=document.getElementById('mapBox');
+    var box=document.getElementById('leafletMap');
     if(box){
       box.innerHTML='<div style="position:absolute;inset:0;display:flex;flex-direction:column;'+
         'align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center;color:#5a6b63">'+
