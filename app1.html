@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Takia - City Guide</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --primary: #166548;
+      --bg: #f8f9fa;
+      --text: #2d3436;
+      --text-muted: #636e72;
+      --border: #edf2f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; position: relative; }
+    
+    /* Header & City Switcher */
+    header {
+      position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
+      background: white; border-radius: 16px; padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .brand-group { display: flex; align-items: center; gap: 8px; }
+    .brand-logo { width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+    .brand-name { font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: -0.5px; }
+    .city-badge { background: #e8f3ee; color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(22,101,72,0.1); }
+
+    /* Map Area */
+    #map { width: 100%; height: 100vh; z-index: 1; }
+
+    /* Categories Horizontal Scroll */
+    .filters-wrapper { position: absolute; top: 80px; left: 0; right: 0; z-index: 1000; padding: 0 12px; pointer-events: none; }
+    .filters { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; pointer-events: auto; }
+    .filters::-webkit-scrollbar { display: none; }
+    .chip {
+      background: white; padding: 8px 16px; border-radius: 24px; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid transparent; transition: all 0.2s;
+    }
+    .chip svg { width: 16px; height: 16px; }
+    .chip.active { border-color: currentColor; background: #fff; }
+
+    /* Bottom Sheet Layout */
+    .sheet {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
+      background: white; border-radius: 24px 24px 0 0; max-height: 80vh;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+      transform: translateY(calc(100% - 110px)); transition: transform 0.3s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+    }
+    .sheet.expanded { transform: translateY(0); }
+    .sheet-handle-zone { padding: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+    .sheet-handle { width: 36px; height: 5px; background: #e2e8f0; border-radius: 3px; margin-bottom: 8px; }
+    .sheet-title { font-size: 15px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .sheet-content { flex: 1; overflow-y: auto; padding: 0 16px 24px 16px; }
+
+    /* Places List & Cards */
+    .places-list { display: flex; flex-direction: column; gap: 12px; }
+    .place-card { background: #f8f9fa; border-radius: 16px; padding: 14px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: background 0.2s; }
+    .place-card:active { background: #edf2f7; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .card-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .rating-badge { display: flex; align-items: center; gap: 2px; color: #ff9f43; font-weight: 600; }
+    .distance-badge { font-weight: 600; color: var(--primary); }
+    .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .features-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .tag { background: white; border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+    /* Details Overlay View */
+    .details-view { position: fixed; inset: 0; background: white; z-index: 2000; display: none; flex-direction: column; }
+    .details-view.active { display: flex; }
+    .details-header { display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border); }
+    .back-btn { background: none; border: none; cursor: pointer; color: var(--text); padding: 4px; }
+    .back-btn svg { width: 24px; height: 24px; }
+    .details-title-main { font-size: 18px; font-weight: 700; }
+    .details-body { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+    .details-photo-box { height: 160px; background: #e8f3ee; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 48px; }
+    .details-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 6px; }
+    .details-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+    .route-btn { background: var(--primary); color: white; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: auto; }
+
+    /* Overlay City Switcher Container */
+    .city-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 24px; }
+    .city-overlay.active { display: flex; }
+    .city-modal { background: white; border-radius: 24px; width: 100%; max-width: 320px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .modal-title { font-size: 18px; font-weight: 700; text-align: center; }
+    .modal-btn { background: #f1f5f9; border: 1px solid var(--border); padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .modal-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="brand-group">
+      <div class="brand-logo">T</div>
+      <div class="brand-name">Takia</div>
+    </div>
+    <div class="city-badge" id="city-switch" onclick="toggleCityModal(true)">
+      <span id="current-city-label">Mecca</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </header>
+
+  <!-- Categories Row -->
+  <div class="filters-wrapper">
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <!-- Map Object Container -->
+  <div id="map"></div>
+
+  <!-- Draggable Bottom Sheet Components -->
+  <div class="sheet" id="bottom-sheet">
+    <div class="sheet-handle-zone" onclick="toggleSheet()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="sheet-header-title">Орындар тізімі</div>
+    </div>
+    <div class="sheet-content">
+      <div class="places-list" id="places-list-container"></div>
+    </div>
+  </div>
+
+  <!-- Full-Screen Details Modal View -->
+  <div class="details-view" id="details-view">
+    <div class="details-header">
+      <button class="back-btn" onclick="closeDetailsView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="details-title-main" id="det-title"></div>
+    </div>
+    <div class="details-body">
+      <div class="details-photo-box" id="det-photo">📍</div>
+      <div class="card-meta">
+        <span class="rating-badge">★ <span id="det-rating">0.0</span> (<span id="det-reviews">0</span>)</span>
+        <span class="distance-badge">Haram: ~<span id="det-distance">0</span>м</span>
+      </div>
+      <div>
+        <div class="details-section-title">Жұмыс уақыты</div>
+        <div class="details-text" id="det-hours"></div>
+      </div>
+      <div>
+        <div class="details-section-title">Сипаттамасы</div>
+        <div class="details-text" id="det-desc"></div>
+      </div>
+      <div>
+        <div class="details-section-title">Ерекшеліктері</div>
+        <div class="features-row" id="det-tags"></div>
+      </div>
+      <button class="route-btn" id="route-action-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        Картадан бағыт құру
+      </button>
+    </div>
+  </div>
+
+  <!-- City Selection Modal Dialog Overlay -->
+  <div class="city-overlay" id="city-modal-overlay" onclick="if(event.target===this) toggleCityModal(false)">
+    <div class="city-modal">
+      <div class="modal-title">Қаланы таңдаңыз</div>
+      <div class="modal-btn" id="btn-city-mecca" onclick="selectCity('Mecca')">Makkah</div>
+      <div class="modal-btn" id="btn-city-medina" onclick="selectCity('Medina')">Madinah</div>
+    </div>
+  </div>
+
+  <!-- Leaflet & App Engine Javascript Execution Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // System Configurations & Architecture Objects
+    var currentCity = 'Mecca';
+    var activeCategory = 'heritage'; // Стартовая активная категория
+    var map, markersLayer;
+
+    // Сконфигурированная база городов
+    var CITIES = {
+      Mecca: { lat: 21.4225, lng: 39.8262, name: 'Makkah' },
+      Medina: { lat: 24.4672, lng: 39.6112, name: 'Madinah' }
+    };
+
+    // Верифицированные категории и иконки, включая безопасное "Наследие"
+    var CATEGORIES = {
+      heritage: { id: 'heritage', name: 'Тарихи мұра', icon: 'heritage', color: '#166548', bgColor: '#e8f3ee' },
+      food: { id: 'food', name: 'Еда', icon: 'food', color: '#e85a4f', bgColor: '#fde2dd' },
+      shop: { id: 'shop', name: 'Магазины', icon: 'shop', color: '#ff9f43', bgColor: '#ffefd9' },
+      pharmacy: { id: 'pharmacy', name: 'Аптеки', icon: 'pharmacy', color: '#5b9bf2', bgColor: '#ddebfc' },
+      money: { id: 'money', name: 'Обмен', icon: 'money', color: '#8e74e8', bgColor: '#ece3fa' },
+      prayer: { id: 'prayer', name: 'Намаз', icon: 'prayer', color: '#4ecdc4', bgColor: '#dbf5f2' },
+      medical: { id: 'medical', name: 'Медицина', icon: 'medical', color: '#5b9bf2', bgColor: '#ddebfc' },
+      transport: { id: 'transport', name: 'Транспорт', icon: 'transport', color: '#a89888', bgColor: '#ede8e1' }
+    };
+
+    var ICONS = {
+      heritage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V10a8 8 0 0 1 16 0v12M12 22v-5a2 2 0 0 0-4 0v5M2 22h20M12 2v2"/></svg>',
+      food: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      shop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>',
+      pharmacy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      money: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      prayer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22v-9M9 9l3-3 3 3M12 6V2"/></svg>',
+      medical: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      transport: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="16" rx="2"/><line x1="9" y1="18" x2="15" y2="18"/></svg>'
+    };
+
+    // База данных мест с учетом категории Heritage и светским описанием
+    var PLACES = [
+      // ============ MECCA — HERITAGE (ИСТОРИЧЕСКОЕ НАСЛЕДИЕ) ============
+      {
+        id: 'h001',
+        name: 'Jabal al-Nour (Hira Cultural District)',
+        nameKz: 'Нұр тауы (Хира мәдени орталығы)',
+        category: 'heritage',
+        lat: 21.4572, lng: 39.8592,
+        city: 'Mecca',
+        distanceFromHaram: 4800,
+        rating: 4.9, reviews: 2450,
+        hours: 'Круглосуточно',
+        openNow: true,
+        description: 'Знаменитая гора Нур и прилегающий культурный центр. Место, имеющее колоссальное значение для истории исламской цивилизации, где были зафиксированы первые откровения Священного Писания.',
+        features: ['Исторический центр', 'Пеший подъем на гору', 'Доступна выставка Корана'],
+        photos: ['⛰️'],
+        verified: true
+      },
+      {
+        id: 'h002',
+        name: 'Jabal Thawr',
+        nameKz: 'Сәуір тауы',
+        category: 'heritage',
+        lat: 21.3806, lng: 39.8492,
+        city: 'Mecca',
+        distanceFromHaram: 5500,
+        rating: 4.8, reviews: 1120,
+        hours: 'Круглосуточно',
+        openNow: true,
+        description: 'Гора Саур и ее историческая пещера. Значимый объект эпохи Хиджры (переселения), сыгравший ключевую роль в сохранении ранней исламской общины и изменении карты древней Аравии.',
+        features: ['Горный маршрут', 'Крутой подъем', 'Панорамный вид'],
+        photos: ['⛰️'],
+        verified: true
+      },
+      {
+        id: 'h003',
+        name: 'Al-Hudaybiyah Archeological Site',
+        nameKz: 'Худайбия тарихи орны',
+        category: 'heritage',
+        lat: 21.4322, lng: 39.6644,
+        city: 'Mecca',
+        distanceFromHaram: 17000,
+        rating: 4.7, reviews: 540,
+        hours: '06:00 — 22:00',
+        openNow: true,
+        description: 'Археологическая зона и мечеть Худайбия на западной окраине Мекки. Место подписания мирного договора 628 года, ставшего дипломатическим прорывом в истории древнего региона.',
+        features: ['Исторические руины', 'Информационные стенды', 'Транспортная доступность'],
+        photos: ['🕌'],
+        verified: true
+      },
+      {
+        id: 'h004',
+        name: 'Mount Arafat (Jabal al-Rahmah)',
+        nameKz: 'Арафат тауы',
+        category: 'heritage',
+        lat: 21.3546, lng: 39.9839,
+        city: 'Mecca',
+        distanceFromHaram: 15000,
+        rating: 5.0, reviews: 8900,
+        hours: 'Круглосуточно',
+        openNow: true,
+        description: 'Гора Милости на равнине Арафат. Центральный географический и культурный объект проведения ежегодных исторических собраний паломников со всего мира.',
+        features: ['Смотровая площадка', 'Удобные дорожки', 'Пешая зона'],
+        photos: ['⛰️'],
+        verified: true
+      },
+
+      // ============ MEDINA — HERITAGE (ИСТОРИЧЕСКОЕ НАСЛЕДИЕ) ============
+      {
+        id: 'h101',
+        name: 'Mount Uhud & Martyrs Square',
+        nameKz: 'Ұхұд тауы және Шәһидтер алаңы',
+        category: 'heritage',
+        lat: 24.5034, lng: 39.6108,
+        city: 'Medina',
+        distanceFromHaram: 4500,
+        rating: 4.9, reviews: 3400,
+        hours: 'Круглосуточно',
+        openNow: true,
+        description: 'Исторический ландшафт горы Ухуд и мемориальный комплекс. Место проведения одного из самых масштабных сражений ранней исламской истории, изменившего геополитику региона.',
+        features: ['Гора лучников', 'Историческая площадь', 'Рядом культурный рынок'],
+        photos: ['⛰️'],
+        verified: true
+      },
+      {
+        id: 'h102',
+        name: 'Ethiq Heritage Date Garden',
+        nameKz: 'Әл-Исик тарихи финік бағы',
+        category: 'heritage',
+        lat: 24.4512, lng: 39.6215,
+        city: 'Medina',
+        distanceFromHaram: 2500,
+        rating: 4.6, reviews: 820,
+        hours: '08:00 — 20:00',
+        openNow: true,
+        description: 'Древний финиковый сад в южной части Медины, сохранивший традиционные методы агрокультуры со времен первых веков ислама. Объект культурно-биологического наследия города.',
+        features: ['Натуральные продукты', 'Экскурсионная зона', 'Места отдыха'],
+        photos: ['🌴'],
+        verified: true
+      },
+
+      // Пример стандартного общепита в Мекке для теста переключений
+      {
+        id: 'f001',
+        name: 'Al Baik Restaurant',
+        nameKz: 'Al Baik мейрамханасы',
+        category: 'food',
+        lat: 21.4205, lng: 39.8284,
+        city: 'Mecca',
+        distanceFromHaram: 300,
+        rating: 4.7, reviews: 14800,
+        hours: '06:00 — 02:00',
+        openNow: true,
+        description: 'Популярная сеть быстрого питания в Саудовской Аравии, знаменитая своей фирменной хрустящей курицей со специями.',
+        features: ['Быстрое обслуживание', 'Доступные цены', 'Рядом с Харамом'],
+        photos: ['🍗'],
+        verified: true
+      }
+    ];
+
+    // Инициализация карты и логики интерфейса
+    window.onload = function() {
+      initMap();
+      renderCategories();
+      updateView();
+    };
+
+    function initMap() {
+      var center = CITIES[currentCity];
+      map = L.map('map', { zoomControl: false }).setView([center.lat, center.lng], 13);
+      
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    function renderCategories() {
+      var container = document.getElementById('filters');
+      container.innerHTML = '';
+      
+      Object.keys(CATEGORIES).forEach(function(key) {
+        var cat = CATEGORIES[key];
+        var chip = document.createElement('div');
+        chip.className = 'chip' + (activeCategory === cat.id ? ' active' : '');
+        chip.id = 'chip-' + cat.id;
+        chip.style.color = cat.color;
+        
+        if(activeCategory === cat.id) {
+          chip.style.backgroundColor = cat.bgColor;
+        } else {
+          chip.style.backgroundColor = 'white';
+        }
+        
+        chip.innerHTML = ICONS[cat.icon] + '<span>' + cat.name + '</span>';
+        chip.onclick = function() { selectCategory(cat.id); };
+        container.appendChild(chip);
+      });
+    }
+
+    function selectCategory(catId) {
+      // Сброс старого стиля чипса
+      var prevChip = document.getElementById('chip-' + activeCategory);
+      if(prevChip) {
+        prevChip.className = 'chip';
+        prevChip.style.backgroundColor = 'white';
+      }
+      
+      activeCategory = catId;
+      
+      var newChip = document.getElementById('chip-' + activeCategory);
+      if(newChip) {
+        newChip.className = 'chip active';
+        newChip.style.backgroundColor = CATEGORIES[activeCategory].bgColor;
+      }
+      
+      updateView();
+    }
+
+    function updateView() {
+      markersLayer.clearLayers();
+      var container = document.getElementById('places-list-container');
+      container.innerHTML = '';
+
+      // Фильтрация объектов по городу и активной категории
+      var filtered = PLACES.filter(function(p) {
+        return p.city === currentCity && p.category === activeCategory;
+      });
+
+      document.getElementById('sheet-header-title').innerText = CATEGORIES[activeCategory].name + ' (' + filtered.length + ')';
+
+      if(filtered.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:14px;">Бұл санатта әлі ештеңе жоқ</div>';
+        return;
+      }
+
+      filtered.forEach(function(place) {
+        // Добавление маркера на Leaflet карту
+        var marker = L.circleMarker([place.lat, place.lng], {
+          radius: 8,
+          fillColor: CATEGORIES[place.category].color,
+          color: '#fff',
+          weight: 2,
+          fillOpacity: 0.9
+        });
+        
+        marker.on('click', function() { openDetailsView(place); });
+        markersLayer.addLayer(marker);
+
+        // Создание карточки места для нижнего списка (Bottom Sheet)
+        var card = document.createElement('div');
+        card.className = 'place-card';
+        card.onclick = function() { openDetailsView(place); };
+        
+        card.innerHTML = 
+          '<div class="card-header">' +
+            '<div class="card-title">' + place.nameKz + '</div>' +
+          '</div>' +
+          '<div class="card-meta">' +
+            '<span class="rating-badge">★ ' + place.rating + '</span>' +
+            '<span class="distance-badge">~' + place.distanceFromHaram + ' м</span>' +
+            '<span>' + place.hours + '</span>' +
+          '</div>' +
+          '<div class="card-desc">' + place.description + '</div>';
+          
+        container.appendChild(card);
+      });
+
+      // Перемещение фокуса карты на первый найденный объект, если он есть
+      if(filtered.length > 0) {
+        map.panTo([filtered[0].lat, filtered[0].lng]);
+      }
+    }
+
+    // Управление состоянием шторки (Bottom Sheet)
+    function toggleSheet() {
+      var sheet = document.getElementById('bottom-sheet');
+      sheet.classList.toggle('expanded');
+    }
+
+    // Модалка переключения городов
+    function toggleCityModal(show) {
+      var modal = document.getElementById('city-modal-overlay');
+      modal.className = 'city-overlay' + (show ? ' active' : '');
+      
+      if(show) {
+        document.getElementById('btn-city-mecca').className = 'modal-btn' + (currentCity === 'Mecca' ? ' active' : '');
+        document.getElementById('btn-city-medina').className = 'modal-btn' + (currentCity === 'Medina' ? ' active' : '');
+      }
+    }
+
+    function selectCity(cityName) {
+      currentCity = cityName;
+      document.getElementById('current-city-label').innerText = CITIES[cityName].name;
+      toggleCityModal(false);
+      
+      // Переопределить центр карты под выбранный город
+      var center = CITIES[cityName];
+      map.setView([center.lat, center.lng], 13);
+      
+      updateView();
+    }
+
+    // Детальный просмотр конкретного места
+    function openDetailsView(place) {
+      document.getElementById('det-title').innerText = place.nameKz;
+      document.getElementById('det-rating').innerText = place.rating;
+      document.getElementById('det-reviews').innerText = place.reviews;
+      document.getElementById('det-distance').innerText = place.distanceFromHaram;
+      document.getElementById('det-hours').innerText = place.hours;
+      document.getElementById('det-desc').innerText = place.description;
+      document.getElementById('det-photo').innerText = place.photos && place.photos[0] ? place.photos[0] : '📍';
+      
+      var tagsContainer = document.getElementById('det-tags');
+      tagsContainer.innerHTML = '';
+      if(place.features) {
+        place.features.forEach(function(f) {
+          var tag = document.createElement('span');
+          tag.className = 'tag';
+          tag.innerText = f;
+          tagsContainer.appendChild(tag);
+        });
+      }
+
+      document.getElementById('route-action-btn').onclick = function() {
+        window.open('https://www.google.com/maps/dir/?api=1&destination=' + place.lat + ',' + place.lng);
+      };
+
+      document.getElementById('details-view').className = 'details-view active';
+    }
+
+    function closeDetailsView() {
+      document.getElementById('details-view').className = 'details-view';
+    }
+  </script>
+</body>
+</html>
