@@ -37,7 +37,7 @@
     padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
   }
   .tb-logo{display:flex;align-items:center;gap:10px;font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;color:var(--green-deep)}
-  .tb-logo .mark{width:34px;height:34px;background:linear-gradient(135deg,var(--green-deep),var(--green-light));border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
+  .tb-logo .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;display:flex;align-items:center;justify-content:center}
   .tb-back{display:flex;align-items:center;gap:6px;color:var(--green-deep);font-weight:600;font-size:15px;padding:6px 4px}
   .tb-action{width:38px;height:38px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--green-deep);flex-shrink:0}
 
@@ -284,8 +284,8 @@
     font-size:14px;font-weight:600;cursor:pointer;
   }
   .about-mark{
-    width:64px;height:64px;margin:8px auto 12px;border:2px solid #f0d589;
-    border-radius:18px;display:flex;align-items:center;justify-content:center;
+    width:64px;height:64px;margin:8px auto 12px;
+    border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;
     font-size:30px;color:#f0d589;
   }
   .about-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;letter-spacing:1px}
@@ -340,7 +340,7 @@
 
 <!-- TOP BAR -->
 <div class="topbar" id="topbar">
-  <div class="tb-logo" id="tbLogo"><div class="mark">ﷲ</div>Takia</div>
+  <div class="tb-logo" id="tbLogo"><div class="mark"><svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block"><defs><linearGradient id="tkG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f8259"/><stop offset="1" stop-color="#0a3a28"/></linearGradient><linearGradient id="tkD" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#f4e0a8"/><stop offset="0.5" stop-color="#d4a843"/><stop offset="1" stop-color="#a06f24"/></linearGradient></defs><rect x="6" y="6" width="88" height="88" rx="20" fill="url(#tkG)"/><g transform="rotate(45 50 50)"><ellipse cx="50" cy="50" rx="13" ry="22" fill="url(#tkD)"/><path d="M50 30 Q53.5 40 50 49" stroke="#8a6020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="44.5" cy="43" rx="3.5" ry="8.5" fill="#fff" opacity=".4"/></g></svg></div>Takia</div>
   <button class="tb-action" id="tbAction" onclick="go('profile')">А</button>
 </div>
 
@@ -423,7 +423,7 @@
 <div class="screen" id="s-about" data-tab="profile">
   <div class="about-hero">
     <button class="about-back" onclick="go('profile')">‹ Назад</button>
-    <div class="about-mark">ﷲ</div>
+    <div class="about-mark"><svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block"><defs><linearGradient id="LGab" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f8259"/><stop offset="1" stop-color="#0a3a28"/></linearGradient><linearGradient id="LDab" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#f4e0a8"/><stop offset="0.5" stop-color="#d4a843"/><stop offset="1" stop-color="#a06f24"/></linearGradient></defs><rect x="6" y="6" width="88" height="88" rx="20" fill="url(#LGab)"/><g transform="rotate(45 50 50)"><ellipse cx="50" cy="50" rx="13" ry="22" fill="url(#LDab)"/><path d="M50 30 Q53.5 40 50 49" stroke="#8a6020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="44.5" cy="43" rx="3.5" ry="8.5" fill="#fff" opacity=".4"/></g></svg></div>
     <div class="about-name">Takia</div>
     <div class="about-tag">Тәкия — дом, что ждёт паломника</div>
   </div>
@@ -481,7 +481,7 @@
     </p>
 
     <div class="about-foot">
-      <div class="about-foot-mark">ﷲ</div>
+      <div class="about-foot-mark" style="width:42px;height:42px;margin:0 auto 8px"><svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block"><defs><linearGradient id="LGft" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f8259"/><stop offset="1" stop-color="#0a3a28"/></linearGradient><linearGradient id="LDft" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#f4e0a8"/><stop offset="0.5" stop-color="#d4a843"/><stop offset="1" stop-color="#a06f24"/></linearGradient></defs><rect x="6" y="6" width="88" height="88" rx="20" fill="url(#LGft)"/><g transform="rotate(45 50 50)"><ellipse cx="50" cy="50" rx="13" ry="22" fill="url(#LDft)"/><path d="M50 30 Q53.5 40 50 49" stroke="#8a6020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="44.5" cy="43" rx="3.5" ry="8.5" fill="#fff" opacity=".4"/></g></svg></div>
       <div class="about-foot-txt">
         Takia продолжает традицию казахского гостеприимства
         у святынь ислама.
@@ -1607,7 +1607,7 @@ function updateTopbar(tab){
   var lg=document.getElementById('tbLogo');
   var ac=document.getElementById('tbAction');
   if(tab==='map'||tab==='guides'||tab==='fav'||tab==='profile'){
-    lg.innerHTML='<div class="mark">ﷲ</div>Takia';
+    lg.innerHTML='<div class="mark"><svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block"><defs><linearGradient id="LGjs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f8259"/><stop offset="1" stop-color="#0a3a28"/></linearGradient><linearGradient id="LDjs" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#f4e0a8"/><stop offset="0.5" stop-color="#d4a843"/><stop offset="1" stop-color="#a06f24"/></linearGradient></defs><rect x="6" y="6" width="88" height="88" rx="20" fill="url(#LGjs)"/><g transform="rotate(45 50 50)"><ellipse cx="50" cy="50" rx="13" ry="22" fill="url(#LDjs)"/><path d="M50 30 Q53.5 40 50 49" stroke="#8a6020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="44.5" cy="43" rx="3.5" ry="8.5" fill="#fff" opacity=".4"/></g></svg></div>Takia';
     lg.onclick=null;
     if(tab==='profile'){ac.style.display='none';}
     else{ac.style.display='flex';ac.textContent=CURRENT_USER.name[0];ac.onclick=function(){go('profile')};}
