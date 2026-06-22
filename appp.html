@@ -328,6 +328,12 @@
     font-family:inherit; transition:all .15s;
   }
   .cs-btn.active{ background:#0d4d35; color:#fff; }
+
+  /* Карточки мест наследия */
+  .hpl{ background:#fff; border:1px solid #e0e8e3; border-radius:14px; padding:16px 16px; margin-bottom:12px; }
+  .hpl-h{ font-size:16px; font-weight:700; color:#0d4d35; margin-bottom:3px; }
+  .hpl-d{ font-size:12px; color:#c9a44a; font-weight:600; margin-bottom:8px; }
+  .hpl-t{ font-size:14px; line-height:1.6; color:#3a4742; }
 </style>
 </head>
 <body>
@@ -381,8 +387,11 @@
       <div class="g-ex" onclick="toast('Подготовка к поездке — скоро')">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><div class="info"><div class="ti">Подготовка к поездке</div><div class="su">Чек-листы, что взять</div></div><div class="ar">→</div>
       </div>
-      <div class="g-ex" onclick="toast('Зиярат в Медине — скоро')">
-        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M4 21v-9a8 8 0 0 1 16 0v9M4 21h16M9 21v-4a3 3 0 0 1 6 0v4M12 2v2"/></svg></div><div class="info"><div class="ti">Зиярат в Медине</div><div class="su">Исторические места</div></div><div class="ar">→</div>
+      <div class="g-ex" onclick="go('heritageMecca')">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div><div class="info"><div class="ti">Наследие Мекки</div><div class="su">Священные и исторические места</div></div><div class="ar">→</div>
+      </div>
+      <div class="g-ex" onclick="go('heritageMedina')">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M4 21v-9a8 8 0 0 1 16 0v9M4 21h16M9 21v-4a3 3 0 0 1 6 0v4M12 2v2"/></svg></div><div class="info"><div class="ti">Наследие Медины</div><div class="su">Священные и исторические места</div></div><div class="ar">→</div>
       </div>
       <div class="g-ex" onclick="toast('Сборник дуа — скоро')">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M4 5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 0-2 2V5zM20 5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 1 2 2V5z"/></svg></div><div class="info"><div class="ti">Сборник дуа</div><div class="su">50+ дуа с переводом</div></div><div class="ar">→</div>
@@ -479,6 +488,84 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ===== НАСЛЕДИЕ МЕККИ ===== -->
+<div class="screen" id="s-heritageMecca" data-tab="guides">
+  <div class="about-hero" style="padding-top:54px">
+    <button class="about-back" onclick="go('guides')">‹ Назад</button>
+    <div class="about-name" style="font-size:28px">Наследие Мекки</div>
+    <div class="about-tag">Священные и исторические места</div>
+  </div>
+  <div class="about-body">
+    <div class="about-lead">Места, связанные с историей ислама и жизнью Пророка ﷺ. Описания носят историко-познавательный характер.</div>
+
+    <div class="hpl">
+      <div class="hpl-h">Гора Нур · пещера Хира</div>
+      <div class="hpl-d">4 км северо-восточнее Харама, высота 642 м</div>
+      <div class="hpl-t">Здесь, в пещере Хира, Пророк ﷺ получил первое откровение Корана в 610 году — первые аяты суры «Аль-Аляк» от ангела Джибриля. Подъём к пещере занимает 1–2 часа.</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Гора Саур · пещера Саур</div>
+      <div class="hpl-d">южнее Харама</div>
+      <div class="hpl-t">Место, связанное с Хиджрой — переселением в Медину. Пророк ﷺ и Абу Бакр укрывались здесь три ночи от преследования курайшитов.</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Мечеть Аиши (ат-Танъим)</div>
+      <div class="hpl-d">~7 км от Харама</div>
+      <div class="hpl-t">Одно из мест входа в ихрам для совершения Умры. Названо в честь матери правоверных Аиши (да будет доволен ею Аллах).</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Худайбия</div>
+      <div class="hpl-d">~25 км к западу от Мекки</div>
+      <div class="hpl-t">Место заключения Худайбийского договора между мусульманами и курайшитами — поворотного события в ранней истории ислама.</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Гора Арафат</div>
+      <div class="hpl-d">~20 км юго-восточнее Мекки</div>
+      <div class="hpl-t">Место стояния (вукуф) в день Арафат — ключевого обряда Хаджа. Здесь Пророк ﷺ произнёс Прощальную проповедь.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== НАСЛЕДИЕ МЕДИНЫ ===== -->
+<div class="screen" id="s-heritageMedina" data-tab="guides">
+  <div class="about-hero" style="padding-top:54px">
+    <button class="about-back" onclick="go('guides')">‹ Назад</button>
+    <div class="about-name" style="font-size:28px">Наследие Медины</div>
+    <div class="about-tag">Священные и исторические места</div>
+  </div>
+  <div class="about-body">
+    <div class="about-lead">Места Медины, связанные с историей ислама и жизнью Пророка ﷺ. Описания носят историко-познавательный характер.</div>
+
+    <div class="hpl">
+      <div class="hpl-h">Гора Ухуд</div>
+      <div class="hpl-d">~5 км севернее мечети Пророка ﷺ</div>
+      <div class="hpl-t">Место битвы при Ухуде (625 г). У подножия горы — кладбище павших, включая Хамзу (да будет доволен им Аллах), дядю Пророка ﷺ.</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Мечеть Куба</div>
+      <div class="hpl-d">~3 км южнее мечети Пророка ﷺ</div>
+      <div class="hpl-t">Первая мечеть в истории ислама, заложенная Пророком ﷺ при переселении в Медину. Упомянута в Коране (сура 9:108).</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Мечеть Киблатайн</div>
+      <div class="hpl-d">северо-западнее центра Медины</div>
+      <div class="hpl-t">«Мечеть двух кибл» — здесь во время молитвы пришло повеление сменить направление киблы с Иерусалима на Мекку.</div>
+    </div>
+
+    <div class="hpl">
+      <div class="hpl-h">Финиковые сады</div>
+      <div class="hpl-d">в окрестностях Медины</div>
+      <div class="hpl-t">Медина издревле известна финиковыми плантациями. Финики Аджва особо упоминаются в хадисах Пророка ﷺ.</div>
+    </div>
   </div>
 </div>
 
